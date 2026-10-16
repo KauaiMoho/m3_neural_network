@@ -18,7 +18,6 @@ class Tensor {
   int* dims;
   int* dists;
   float* data;
-  static bool cuda;
   static uint16_t tile;  // MUST be a multiple of 4.
   static constexpr uint16_t alignment =
       64;  // 16 minimum for SIMD optimization, can change to that, aligning to
@@ -41,8 +40,10 @@ class Tensor {
       const;  // Get a tile size for a specific matix size. It will assume
               // matrix dimensions are square for fitting into cache for
               // simplicity.
+  #ifdef WINDOWS_VER
   void matmul_cuda(const float* A, const float* B, float* C, int n, int m,
                    int k) const;
+  #endif
   void matmul_cpu_batched(const float* __restrict__ A,
                           const float* __restrict__ B, float* __restrict__ C,
                           const int* this_dists, const int* other_dists, int n,
@@ -60,8 +61,10 @@ class Tensor {
   void matmul_cpu_unrolled_4x(const float* __restrict__ A,
                               const float* __restrict__ B,
                               float* __restrict__ C, int n, int m, int k) const;
+  #ifndef WINDOWS_VER
   void matmul_amx(const float* __restrict__ A, const float* __restrict__ B,
                   float* __restrict__ C, int n, int m, int k) const;
+  #endif
   void matmul_cpu(const float* __restrict__ A, const float* __restrict__ B,
                   float* __restrict__ C, int n, int m, int k) const;
   void matmul_cpu_tiled(const float* __restrict__ A,
@@ -152,14 +155,12 @@ class Tensor {
   void print_dists(int max = 50) const;  // Print dists
   void print_data(
       int max = 50) const;  // Print data values up to a given max, default 50
-  static void set_CUDA(bool c);  // Set CUDA usage
-  static bool get_CUDA();        // Get CUDA usage
   static void set_tile(int t);
   static int get_tile();
   static int get_alignment();
 };
 
-extern "C" void matmul_cuda(const float* A, const float* B, float* C, int n,
+extern "C" void cuda_kernel(const float* A, const float* B, float* C, int n,
                             int m, int k);
 
 #endif

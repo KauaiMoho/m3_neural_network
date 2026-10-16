@@ -1,13 +1,11 @@
+#include <stdio.h>
+
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <stdio.h>
 #include <vector>
-#include <pthread.h>
-#include <mach/mach.h>
-#include <mach/thread_policy.h>
 
 #include "../include/ANN.h"     // this contains the ANN class definition
 #include "../include/Tensor.h"  // this contains the Tensor class definition
@@ -16,6 +14,7 @@
 // matmul.s -I include Check compiled assembly for unaligned matrix class: g++
 // -O3 -mno-unaligned-access -S src/Tensor.cpp -o matmul_una.s -I include Check
 // diff: diff -u matmul.s matmul_una.s | less
+static const char* DATA_DIR = "data/";
 
 // X, Y
 std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_MNIST_data(
@@ -23,33 +22,22 @@ std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_MNIST_data(
   std::vector<Tensor> X;
   std::vector<Tensor> Y;
 
+  std::string dir = DATA_DIR;
   std::ifstream imgFile;
   std::ifstream labFile;
   int images = 0;
   if (train) {
-    imgFile = std::ifstream(
-        "/Users/karmaluitel/Desktop/Github/m3_neural_network/data/"
-        "train-images.idx3-ubyte",
-        std::ios::binary);
-    labFile = std::ifstream(
-        "/Users/karmaluitel/Desktop/Github/m3_neural_network/data/"
-        "train-labels.idx1-ubyte",
-        std::ios::binary);
+    imgFile = std::ifstream(dir + "train-images.idx3-ubyte", std::ios::binary);
+    labFile = std::ifstream(dir + "train-labels.idx1-ubyte", std::ios::binary);
     images = 60000;
   } else {
-    imgFile = std::ifstream(
-        "/Users/karmaluitel/Desktop/Github/m3_neural_network/data/"
-        "t10k-images.idx3-ubyte",
-        std::ios::binary);
-    labFile = std::ifstream(
-        "/Users/karmaluitel/Desktop/Github/m3_neural_network/data/"
-        "t10k-labels.idx1-ubyte",
-        std::ios::binary);
+    imgFile = std::ifstream(dir + "t10k-images.idx3-ubyte", std::ios::binary);
+    labFile = std::ifstream(dir + "t10k-labels.idx1-ubyte", std::ios::binary);
     images = 10000;
   }
 
   if (!imgFile.is_open() || !labFile.is_open()) {
-    throw std::runtime_error("Failed to open MNIST files");
+    throw std::runtime_error("Failed to open MNIST files in " + dir);
   }
 
   // Skip Headers
@@ -73,7 +61,8 @@ std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_MNIST_data(
 
     float* label_data = (float*)malloc(batch_size * 10 * sizeof(float));
 
-    if (image_data == nullptr) {
+    if (label_data == nullptr) {
+      free(image_data);
       throw std::runtime_error("Memory allocation error");
     }
 
@@ -138,11 +127,6 @@ void test(ANN& model, const std::vector<Tensor>& X,
 }
 
 int main() {
-  pthread_t t = pthread_self();
-  qos_class_t qos;
-  int ret = pthread_get_qos_class_np(t, &qos, NULL);
-  std::cout << ret << "\n";
-  
   std::vector<int> sizes = {784, 128, 64, 10};
   std::vector<ANN::Activation> activations = {
       ANN::Activation::RELU, ANN::Activation::RELU, ANN::Activation::SOFTMAX};

@@ -1,5 +1,6 @@
 //Credit to Peter Cawley et. al (https://github.com/corsix/amx) for reverse-engineered AMX headers.
 
+#ifndef WINDOWS_VER
 #pragma once
 #include <stdint.h>
 
@@ -33,3 +34,4 @@
 #define AMX_MATINT(gpr) AMX_OP_GPR(20, gpr)
 #define AMX_MATFP(gpr)  AMX_OP_GPR(21, gpr)
 #define AMX_GENLUT(gpr) AMX_OP_GPR(22, gpr)
+#endif

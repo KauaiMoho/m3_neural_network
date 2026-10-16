@@ -248,7 +248,7 @@ int main() {
 
 // Extern from Matrix Class
 // TODO: Handle host/device memory transfer, setup tuning vars in future, call matmul_kernel.
-extern "C" void matmul_cuda(
+extern "C" __declspec(dllexport) void cuda_kernel(
     const float* A,
     const float* B,
     float* C,

@@ -8,3 +8,6 @@ data/
 *_bin*
 *.s
 .DS_Store
+GPUKernel.dll
+GPUKernel.exp
+GPUKernel.lib
