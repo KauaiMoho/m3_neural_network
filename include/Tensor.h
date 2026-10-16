@@ -1,13 +1,12 @@
 #ifndef MATRIX_H
 #define MATRIX_H
-#include <arm_neon.h>
+#include <neon_shim.h>
 #include <algorithm>
 #include <iostream>
 #include <random>
 #include <stdexcept>
 #include <thread>
 #include <tuple>
-#include "Metal.hpp"
 #include "AMXKernel.h"
 
 class Tensor {

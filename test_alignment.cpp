@@ -34,7 +34,7 @@ int main() {
 
     const size_t bytes = N * sizeof(float) + (N * sizeof(float))%ALIGNMENT;
 
-    float* aligned = static_cast<float*>(aligned_alloc(ALIGNMENT, bytes));
+    float* aligned = static_cast<float*>(tensor_alloc(ALIGNMENT, bytes));
 
     if (aligned == nullptr) {
         free(aligned);

@@ -1,4 +1,4 @@
-#include "../include/apple/Tensor.h"
+#include "../include/Tensor.h"
 
 // Default do not use CUDA
 bool Tensor::cuda = false;
@@ -197,7 +197,7 @@ Tensor& Tensor::operator=(const Tensor& other) {
 
   free(dims);
   free(dists);
-  free(data);
+  tensor_free(data);
 
   dim_len = other.get_dim_len();
   data_len = other.data_len;
@@ -243,7 +243,7 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
 
   free(dims);
   free(dists);
-  free(data);
+  tensor_free(data);
 
   dim_len = other.get_dim_len();
   data_len = other.data_len;
@@ -265,11 +265,11 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
 Tensor::~Tensor() {
   free(dims);
   free(dists);
-  free(data);
+  tensor_free(data);
 }
 
 float* Tensor::default_data_alloc() const {
-  float* arr = (float*)aligned_alloc(alignment, aligned_data_len);
+  float* arr = (float*)tensor_alloc(alignment, aligned_data_len);
 
   if (arr == nullptr) {
     throw std::runtime_error("Default data memory allocation error");
@@ -285,7 +285,7 @@ float* Tensor::init_data_alloc(size_t size) {
     aligned_data_len += alignment - remainder;
   }
 
-  float* arr = (float*)aligned_alloc(alignment, aligned_data_len);
+  float* arr = (float*)tensor_alloc(alignment, aligned_data_len);
 
   if (arr == nullptr) {
     throw std::runtime_error("Init data memory allocation error");
@@ -301,7 +301,7 @@ float* Tensor::float_size_alloc(size_t size) const {
     a_size += alignment - remainder;
   }
 
-  float* arr = (float*)aligned_alloc(alignment, a_size);
+  float* arr = (float*)tensor_alloc(alignment, a_size);
 
   if (arr == nullptr) {
     throw std::runtime_error("Float memory allocation error");
@@ -522,7 +522,7 @@ void Tensor::matmul_cpu_batched(const float* __restrict__ A,
       }
     }
   }
-  free(B_t);
+  tensor_free(B_t);
 }
 
 void Tensor::matmul_cuda(const float* A, const float* B, float* C, int n, int m,
@@ -591,7 +591,7 @@ void Tensor::matmul_cpu_outer(const float* __restrict__ A,
       }
     }
   }
-  free(A_t);
+  tensor_free(A_t);
 }
 
 void Tensor::matmul_cpu_unrolled_16x(const float* __restrict__ A,
@@ -862,7 +862,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float* __restrict__ A,
       }
     }
   }
-  free(B_t);
+  tensor_free(B_t);
 }
 
 void Tensor::matmul_cpu_unrolled_8x(const float* __restrict__ A,
@@ -1021,7 +1021,7 @@ void Tensor::matmul_cpu_unrolled_8x(const float* __restrict__ A,
       }
     }
   }
-  free(B_t);
+  tensor_free(B_t);
 }
 
 void Tensor::matmul_cpu_unrolled_4x(const float* __restrict__ A,
@@ -1116,7 +1116,7 @@ void Tensor::matmul_cpu_unrolled_4x(const float* __restrict__ A,
       }
     }
   }
-  free(B_t);
+  tensor_free(B_t);
 }
 
 // Main issue 1: Not targeting performance cores, learned from profiler results
@@ -1264,7 +1264,8 @@ void Tensor::matmul_amx(const float* __restrict__ A, const float* __restrict__ B
     }
   }
 
-  free(A_t);
+  tensor_free(A_t);
+  tensor_free(tmp);
 }
 
 void Tensor::matmul_cpu(const float* __restrict__ A,
@@ -1313,7 +1314,7 @@ void Tensor::matmul_cpu(const float* __restrict__ A,
       }
     }
   }
-  free(B_t);
+  tensor_free(B_t);
 }
 
 void Tensor::matmul_cpu_naive(const float* __restrict__ A,
@@ -1595,7 +1596,7 @@ Tensor Tensor::matmul(const Tensor& other) const {
           data_out[i] = sum;
         }
       }
-      free(other_t);
+      tensor_free(other_t);
       Tensor ret = Tensor(new_dims, 1, data_out, false);
       return ret;
     }
@@ -1618,7 +1619,7 @@ Tensor Tensor::matmul(const Tensor& other) const {
         // Switch between different matmul alg's for profiling.
         matmul_amx(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
         // matmul_cpu_unrolled_16x(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
-        //matmul_cpu_unrolled_8x(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
+        // matmul_cpu_unrolled_8x(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
         // matmul_cpu_unrolled_4x(data, other.data, data_out, new_dims[0],dims[1], new_dims[1]); 
         // matmul_cpu(data, other.data, data_out,new_dims[0], dims[1], new_dims[1]); 
         // matmul_cpu_outer(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);

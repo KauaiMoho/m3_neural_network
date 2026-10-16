@@ -9,8 +9,8 @@
 #include <mach/mach.h>
 #include <mach/thread_policy.h>
 
-#include "../include/apple/ANN.h"     // this contains the ANN class definition
-#include "../include/apple/Tensor.h"  // this contains the Tensor class definition
+#include "../include/ANN.h"     // this contains the ANN class definition
+#include "../include/Tensor.h"  // this contains the Tensor class definition
 
 // Check compiled assembly for matrix class: g++ -O3 -S src/Tensor.cpp -o
 // matmul.s -I include Check compiled assembly for unaligned matrix class: g++

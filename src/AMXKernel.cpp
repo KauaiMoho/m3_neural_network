@@ -1,4 +1,4 @@
-#include "../include/apple/AMXKernel.h"
+#include "../include/AMXKernel.h"
 
 namespace {
 

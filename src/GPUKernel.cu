@@ -17,7 +17,6 @@ constexpr int THREAD_TILE = 2; // MUST BE A factor of BLOCK_TILE
 // Stride C = k
 
 // TODO: Roofline analysis, FLOP calculator
-// TODO: MEMSET C to be all 0.
 __global__ void matmul_kernel(const float *A, const float *B, float *C, int n, int m, int k) {
 
     const int r_block_idx = threadIdx.y * THREAD_TILE;
@@ -37,8 +36,6 @@ __global__ void matmul_kernel(const float *A, const float *B, float *C, int n, i
     }
 
     for (int block_tile = 0; block_tile < m; block_tile += BLOCK_TILE * THREAD_TILE) {
-
-        // TODO: Change so a given thread fills its THREAD_TILE * THREAD_TILE instead of 1
 
         int thread_tile_global_r = r_global_idx;
         int thread_tile_block_r = r_block_idx;
@@ -197,7 +194,7 @@ int run_test() {
         cudaMemcpy(d_B, h_B, size_B, cudaMemcpyHostToDevice);
 
         dim3 blockDim(BLOCK_TILE, BLOCK_TILE);
-        dim3 gridDim((k + blockDim.y * THREAD_TILE - 1) / (blockDim.y * THREAD_TILE), (n + blockDim.x * THREAD_TILE - 1) / (blockDim.x * THREAD_TILE));
+        dim3 gridDim((k + blockDim.x * THREAD_TILE - 1) / (blockDim.x * THREAD_TILE), (n + blockDim.y * THREAD_TILE - 1) / (blockDim.y * THREAD_TILE));
 
         printf("Grid: (%d, %d), Block: (%d, %d)\n", gridDim.x, gridDim.y, blockDim.x, blockDim.y);
 
@@ -251,6 +248,40 @@ int main() {
 
 // Extern from Matrix Class
 // TODO: Handle host/device memory transfer, setup tuning vars in future, call matmul_kernel.
-//  extern "C" void matmul_cuda(const float* A, const float* B, float* C, int n, int m, int k) {
+extern "C" void matmul_cuda(
+    const float* A,
+    const float* B,
+    float* C,
+    int n, int m, int k)
+{
+    float *d_A, *d_B, *d_C;
 
-// }
+    size_t size_A = (size_t)n * m * sizeof(float);
+    size_t size_B = (size_t)m * k * sizeof(float);
+    size_t size_C = (size_t)n * k * sizeof(float);
+
+    cudaMalloc(&d_A, size_A);
+    cudaMalloc(&d_B, size_B);
+    cudaMalloc(&d_C, size_C);
+
+    cudaMemcpy(d_A, A, size_A, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, B, size_B, cudaMemcpyHostToDevice);
+
+    dim3 blockDim(BLOCK_TILE, BLOCK_TILE);
+    dim3 gridDim(
+        (k + blockDim.x * THREAD_TILE - 1) /
+            (blockDim.x * THREAD_TILE),
+        (n + blockDim.y * THREAD_TILE - 1) /
+            (blockDim.y * THREAD_TILE)
+    );
+
+    matmul_kernel<<<gridDim, blockDim>>>(d_A, d_B, d_C, n, m, k);
+
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(C, d_C, size_C, cudaMemcpyDeviceToHost);
+
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_C);
+}
