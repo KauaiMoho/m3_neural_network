@@ -126,43 +126,39 @@ void test(ANN& model, const std::vector<Tensor>& X,
             << "\n";
 }
 
-// int main() {
-//   std::vector<int> sizes = {784, 128, 64, 10};
-//   std::vector<ANN::Activation> activations = {
-//       ANN::Activation::RELU, ANN::Activation::RELU, ANN::Activation::SOFTMAX};
-//   ANN model = ANN(sizes, activations, 17);
+int model_benchmark(const std::vector<int> sizes) {
+  std::vector<ANN::Activation> activations = {
+      ANN::Activation::RELU, ANN::Activation::RELU, ANN::Activation::SOFTMAX};
+  ANN model = ANN(sizes, activations, 17);
 
-//   model.print_weights();
-//   model.print_biases();
-//   std::cout << "\n";
+  model.print_weights();
+  model.print_biases();
+  std::cout << "\n";
 
-//   constexpr int batch_size = 64;
+  constexpr int batch_size = 64;
 
-//   std::tuple<std::vector<Tensor>, std::vector<Tensor>> train_dataset =
-//       load_MNIST_data(true, batch_size);
-//   std::tuple<std::vector<Tensor>, std::vector<Tensor>> test_dataset =
-//       load_MNIST_data(false, batch_size);
+  std::tuple<std::vector<Tensor>, std::vector<Tensor>> train_dataset =
+      load_MNIST_data(true, batch_size);
+  std::tuple<std::vector<Tensor>, std::vector<Tensor>> test_dataset =
+      load_MNIST_data(false, batch_size);
 
-//   auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::high_resolution_clock::now();
 
-//   train(model, std::get<0>(train_dataset), std::get<1>(train_dataset), 5,
-//         batch_size);
-//   test(model, std::get<0>(test_dataset), std::get<1>(test_dataset), batch_size);
+  train(model, std::get<0>(train_dataset), std::get<1>(train_dataset), 5,
+        batch_size);
+  test(model, std::get<0>(test_dataset), std::get<1>(test_dataset), batch_size);
 
-//   auto end = std::chrono::high_resolution_clock::now();
+  auto end = std::chrono::high_resolution_clock::now();
 
-//   std::cout << "\n";
-//   model.print_weights();
-//   model.print_biases();
-//   std::cout << "\n";
+  std::cout << "\n";
+  model.print_weights();
+  model.print_biases();
+  std::cout << "\n";
 
-//   return 0;
-// }
+  return 0;
+}
 
-using clk = std::chrono::steady_clock;
-
-int main() {
-  int size = 4096;
+int matrix_benchmark(int size) {
   int dims[2] = {size, size};
   Tensor a(dims, 2, (unsigned int)17);
   Tensor b(dims, 2, (unsigned int)42);
@@ -177,10 +173,10 @@ int main() {
 
   std::vector<double> times;
   for (int i = 0; i < iters; ++i) {
-    auto s = clk::now();
+    auto s = std::chrono::steady_clock::now();
     auto r = a.matmul(b);
     asm volatile("" : : "g"(&r) : "memory");
-    auto e = clk::now();
+    auto e = std::chrono::steady_clock::now();
     times.push_back(std::chrono::duration<double>(e - s).count());
   }
 
@@ -193,4 +189,11 @@ int main() {
             << " GFLOP/s)\n";
   std::cout << "median: " << median * 1e3 << " ms (" << flops / median / 1e9
             << " GFLOP/s)\n";
+}
+
+int main() {
+  std::vector<int> layers = {784, 2048, 1024, 512, 512, 64, 10};
+  int size = 256;
+  model_benchmark(layers);
+  matrix_benchmark()
 }

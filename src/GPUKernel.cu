@@ -16,74 +16,85 @@ constexpr int THREAD_TILE = 4; // MUST BE A factor of BLOCK_TILE
 // Stride B = k
 // Stride C = k
 
-// TODO: Roofline analysis, FLOP calculator
 __global__ void matmul_kernel(const float *A, const float *B, float *C, int n, int m, int k) {
 
-    const int r_block_idx = threadIdx.y * THREAD_TILE;
-    const int c_block_idx = threadIdx.x * THREAD_TILE;
+    //Each block will compute blockDim^2 * threadTile^2 elements
 
-    const int r_global_idx = blockIdx.y * (blockDim.y * THREAD_TILE) + r_block_idx; // Swap to make use of NVIDIA global coalescing (SIMT).
-    const int c_global_idx = blockIdx.x * (blockDim.x * THREAD_TILE) + c_block_idx;
+    const int thread_row = threadIdx.y; //threadIdx.y increments second fastest (loops back after threadIdx.x hits BLOCKTILE;  y = floor(x/BLOCKTILE) )
+    //Since rows are non-consecutive in row-major form, we want threadIdx.y to access rows.
+    const int thread_col = threadIdx.x; //threadIdx.x increments the fastest. If we use threadIdx.x to access consecutive elements, can happen in one memory access (coalescing)
+    //Since cols are consecutive in row major form, we want threadIdx.x to access cols (coaleced, in one access)
 
-    __shared__ float Ashared[BLOCK_TILE * THREAD_TILE][BLOCK_TILE * THREAD_TILE]; // SMEM Caching for Block tiles
-    __shared__ float Bshared[BLOCK_TILE * THREAD_TILE][BLOCK_TILE * THREAD_TILE];
+    const int global_row = blockIdx.y * (blockDim.y * THREAD_TILE) + (thread_row * THREAD_TILE);
+    //The starting row index for the THREAD_TILE * THREAD_TILE set of elements this thread will compute.
+    const int global_col = blockIdx.x * (blockDim.x * THREAD_TILE) + (thread_col * THREAD_TILE);
+    //The starting col index for the THREAD_TILE * THREAD_TILE set of elements this thread will compute.
+
+    //Amount of elements each thread LOADS (into shared mem): THREAD_TILE * M_FACTOR
+    //Amount of elements each thread COMPUTES: THREAD_TILE * THREAD_TILE
+
+    const int M_FACTOR = 1;
+    const int S_TILE = BLOCK_TILE * THREAD_TILE; // MUST be a multiple of BLOCK_TILE
+    const int M_TILE = BLOCK_TILE * M_FACTOR; // MUST be a multiple of BLOCK_TILE - To allow each thread to work
+
+    __shared__ float Ashared[S_TILE][M_TILE]; // SMEM Caching for Block tiles
+    __shared__ float Bshared[M_TILE][S_TILE];
 
     float accum[THREAD_TILE * THREAD_TILE]; // Register level thread tiles
 
-    #pragma unroll
     for (int i = 0; i < THREAD_TILE * THREAD_TILE; ++i) {
         accum[i] = 0;
     }
 
-    for (int block_tile = 0; block_tile < m; block_tile += BLOCK_TILE * THREAD_TILE) {
+    for (int m_tile = 0; m_tile < m; m_tile += M_TILE) {
 
-        int thread_tile_global_r = r_global_idx;
-        int thread_tile_block_r = r_block_idx;
-        int row_block_tile = block_tile + r_block_idx;
-        int thread_tile_global_c = c_global_idx;
-        int thread_tile_block_c = c_block_idx;
-        int col_block_tile = block_tile + c_block_idx;
+        //Since A and B are  BLOCK_TILE^2 * THREAD_TILE * M_FACTOR, Each thead will load S_TILE rows and M_TILE cols of A (BLOCK_TILE^2 threads)
+        //Possible improvment could be flattening the loops to be 1d, decoupling from BLOCK_TILE completely. This involves bounds checking with / and %
 
-        for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
-            for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE; ++thread_tile_c) {
-
-                if (thread_tile_global_r < n && col_block_tile < m) {
-                    Ashared[thread_tile_block_r][thread_tile_block_c] = A[thread_tile_global_r * m + col_block_tile];
+        //TODO: Try transpose
+        for (int r_shift = 0; r_shift < THREAD_TILE; ++r_shift) {
+            for (int c_shift = 0; c_shift < M_FACTOR; ++c_shift) {
+                int As_row = thread_row + (r_shift * BLOCK_TILE); //As Rows = BLOCK_TILE * THREAD_TILE
+                int As_col = thread_col + (c_shift * BLOCK_TILE); //As Cols = BLOCK_TILE * M_FACTOR
+                int A_row = blockIdx.y * S_TILE + As_row;
+                int A_col = m_tile + As_col;
+                
+                if (A_row < n && A_col < m) {
+                    Ashared[As_row][As_col] = A[A_row * m + A_col];
                 } else {
-                    Ashared[thread_tile_block_r][thread_tile_block_c] = 0; // 0 Padding at edges
+                    Ashared[As_row][As_col] = 0;
                 }
-
-                if (thread_tile_global_c < k && row_block_tile < m){
-                    Bshared[thread_tile_block_r][thread_tile_block_c] = B[row_block_tile * k + thread_tile_global_c];
-                } else {
-                    Bshared[thread_tile_block_r][thread_tile_block_c] = 0;
-                }
-
-                thread_tile_global_c++;
-                thread_tile_block_c++;
-                col_block_tile++;
             }
-            thread_tile_global_r++;
-            thread_tile_block_r++;
-            row_block_tile++;
-            thread_tile_global_c = c_global_idx;
-            thread_tile_block_c = c_block_idx;
-            col_block_tile = block_tile + c_block_idx;
+        }
+
+        //Load Bshared
+        for (int r_shift = 0; r_shift < M_FACTOR; ++r_shift) {
+            for (int c_shift = 0; c_shift < THREAD_TILE; ++c_shift) {
+                int Bs_row = thread_row + (r_shift * BLOCK_TILE); //Bs Rows = BLOCK_TILE * M_FACTOR
+                int Bs_col = thread_col + (c_shift * BLOCK_TILE); //Bs Cols = BLOCK_TILE * THREAD_TILE
+                int B_row = m_tile + Bs_row;
+                int B_col = blockIdx.x * S_TILE + Bs_col;
+
+                if (B_row < m && B_col < k) {
+                    Bshared[Bs_row][Bs_col] = B[B_row * k + B_col];
+                } else {
+                    Bshared[Bs_row][Bs_col] = 0;
+                }
+            }
         }
 
         __syncthreads();
 
-        // Increase arithmetic intensity by computing multiple values of C per thread
-        for (int i = 0; i < BLOCK_TILE * THREAD_TILE; ++i) {
+        for (int i = 0; i < M_TILE; ++i) {
             float a_reg[THREAD_TILE];
             float b_reg[THREAD_TILE];
             
             for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
-                a_reg[thread_tile_r] = Ashared[r_block_idx + thread_tile_r][i];
+                a_reg[thread_tile_r] = Ashared[(thread_row * THREAD_TILE) + thread_tile_r][i];
             }
                 
             for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE; ++thread_tile_c) {
-                b_reg[thread_tile_c] = Bshared[i][c_block_idx + thread_tile_c];
+                b_reg[thread_tile_c] = Bshared[i][(thread_col * THREAD_TILE) + thread_tile_c];
             }
 
             for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
@@ -96,18 +107,18 @@ __global__ void matmul_kernel(const float *A, const float *B, float *C, int n, i
         __syncthreads();
     }
 
-    int thread_tile_global_r = r_global_idx;
-    int thread_tile_global_c = c_global_idx;
+    for (int r_shift = 0; r_shift < THREAD_TILE; ++r_shift) {
+        for (int c_shift = 0; c_shift < THREAD_TILE; ++c_shift) {
 
-    for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
-        for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE; ++thread_tile_c) {
-            if (thread_tile_global_r < n && thread_tile_global_c < k) {
-                C[thread_tile_global_r * k + thread_tile_global_c] = accum[thread_tile_r * THREAD_TILE + thread_tile_c];
+            int acc_row = r_shift;
+            int acc_col = c_shift;
+            int C_row = blockIdx.y * (blockDim.y * THREAD_TILE) + (thread_row + (r_shift * BLOCK_TILE)); // Block offset + Thread offset
+            int C_col = blockIdx.x * (blockDim.x * THREAD_TILE) + (thread_col + (c_shift * BLOCK_TILE));
+
+            if (C_row < n && C_col < k) {
+                C[C_row * k + C_col] = accum[acc_row * THREAD_TILE + acc_col];
             }
-            thread_tile_global_c++;
         }
-        thread_tile_global_r++;
-        thread_tile_global_c = c_global_idx;
     }
 }
 
