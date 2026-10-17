@@ -1376,11 +1376,11 @@ void Tensor::matmul_amx(const float *__restrict__ A, const float *__restrict__ B
 
   const size_t TILE = 32; // 2x2 16x16 tiles.
   float *A_t = float_size_alloc(n * m);
-  memset(C, 0, n * k * sizeof(float));
   simd_transpose(A, A_t, n, m);
 
   float *tmp = float_size_alloc(32 * 32);
 
+  AMX_SET();
   for (size_t ic = 0; ic < n; ic += TILE)
   {
     size_t valid_a = std::min(TILE, n - ic);
@@ -1389,37 +1389,26 @@ void Tensor::matmul_amx(const float *__restrict__ A, const float *__restrict__ B
       size_t valid_b = std::min(TILE, k - lc);
       float *ptrC = &C[ic * k + lc];
 
-      memset(tmp, 0, 32 * 32 * sizeof(float));
-      for (size_t r = 0; r < valid_a; r++)
-      {
-        for (size_t c = 0; c < valid_b; c++)
-        {
-          tmp[c * 32 + r] = ptrC[r * k + c];
-        }
-      }
-
-      AMX_SET();
-      load_amx_output(tmp);
-
       for (size_t j = 0; j < m; ++j)
       {
         const float *ptrA = &A_t[j * n + ic];
         const float *ptrB = &B[j * k + lc];
-        amx_kernel_f32(ptrA, ptrB, valid_a, valid_b);
+        amx_kernel_f32(ptrA, ptrB, valid_a, valid_b, j == 0);
       }
 
       store_amx_output(tmp);
-      AMX_CLR();
+      
 
       for (size_t r = 0; r < valid_a; r++)
       {
         for (size_t c = 0; c < valid_b; c++)
         {
-          ptrC[r * k + c] += tmp[c * 32 + r];
+          ptrC[r * k + c] = tmp[c * 32 + r];
         }
       }
     }
   }
+  AMX_CLR();
 
   tensor_free(A_t);
   tensor_free(tmp);
@@ -1826,8 +1815,8 @@ Tensor Tensor::matmul(const Tensor &other) const
       float *data_out = float_size_alloc(new_dims[0] * new_dims[1]);
 
       // Switch between different matmul alg's for profiling.
-      matmul_cuda(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
-      // matmul_amx(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]); // MAC ONLY
+      // matmul_cuda(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
+      matmul_amx(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]); // MAC ONLY
       // matmul_cpu_unrolled_16x(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
       // matmul_cpu_unrolled_8x(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
       // matmul_cpu_unrolled_4x(data, other.data, data_out, new_dims[0],dims[1], new_dims[1]);

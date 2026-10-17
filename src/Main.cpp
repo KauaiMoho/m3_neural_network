@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -126,40 +126,71 @@ void test(ANN& model, const std::vector<Tensor>& X,
             << "\n";
 }
 
+// int main() {
+//   std::vector<int> sizes = {784, 128, 64, 10};
+//   std::vector<ANN::Activation> activations = {
+//       ANN::Activation::RELU, ANN::Activation::RELU, ANN::Activation::SOFTMAX};
+//   ANN model = ANN(sizes, activations, 17);
+
+//   model.print_weights();
+//   model.print_biases();
+//   std::cout << "\n";
+
+//   constexpr int batch_size = 64;
+
+//   std::tuple<std::vector<Tensor>, std::vector<Tensor>> train_dataset =
+//       load_MNIST_data(true, batch_size);
+//   std::tuple<std::vector<Tensor>, std::vector<Tensor>> test_dataset =
+//       load_MNIST_data(false, batch_size);
+
+//   auto start = std::chrono::high_resolution_clock::now();
+
+//   train(model, std::get<0>(train_dataset), std::get<1>(train_dataset), 5,
+//         batch_size);
+//   test(model, std::get<0>(test_dataset), std::get<1>(test_dataset), batch_size);
+
+//   auto end = std::chrono::high_resolution_clock::now();
+
+//   std::cout << "\n";
+//   model.print_weights();
+//   model.print_biases();
+//   std::cout << "\n";
+
+//   return 0;
+// }
+
+using clk = std::chrono::steady_clock;
+
 int main() {
-  std::vector<int> sizes = {784, 128, 64, 10};
-  std::vector<ANN::Activation> activations = {
-      ANN::Activation::RELU, ANN::Activation::RELU, ANN::Activation::SOFTMAX};
-  ANN model = ANN(sizes, activations, 17);
+  int size = 4096;
+  int dims[2] = {size, size};
+  Tensor a(dims, 2, (uint)17);
+  Tensor b(dims, 2, (uint)42);
 
-  model.print_weights();
-  model.print_biases();
-  std::cout << "\n";
+  const int warmup = 3;
+  const int iters = 20;
 
-  constexpr int batch_size = 64;
+  for (int i = 0; i < warmup; ++i) {
+    auto r = a.matmul(b);
+    asm volatile("" : : "g"(&r) : "memory");  // keep result alive
+  }
 
-  std::tuple<std::vector<Tensor>, std::vector<Tensor>> train_dataset =
-      load_MNIST_data(true, batch_size);
-  std::tuple<std::vector<Tensor>, std::vector<Tensor>> test_dataset =
-      load_MNIST_data(false, batch_size);
+  std::vector<double> times;
+  for (int i = 0; i < iters; ++i) {
+    auto s = clk::now();
+    auto r = a.matmul(b);
+    asm volatile("" : : "g"(&r) : "memory");
+    auto e = clk::now();
+    times.push_back(std::chrono::duration<double>(e - s).count());
+  }
 
-  auto start = std::chrono::high_resolution_clock::now();
+  std::sort(times.begin(), times.end());
+  double best = times.front();
+  double median = times[times.size() / 2];
+  double flops = 2.0 * size * size * size;
 
-  train(model, std::get<0>(train_dataset), std::get<1>(train_dataset), 5,
-        batch_size);
-  test(model, std::get<0>(test_dataset), std::get<1>(test_dataset), batch_size);
-
-  auto end = std::chrono::high_resolution_clock::now();
-
-  std::cout << "\n";
-  model.print_weights();
-  model.print_biases();
-  std::cout << "\n";
-
-  auto duration =
-      std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-  std::cout << "Time elapsed: " << duration.count() / 1000.0 << " s\n";
-
-  return 0;
+  std::cout << "best:   " << best * 1e3 << " ms (" << flops / best / 1e9
+            << " GFLOP/s)\n";
+  std::cout << "median: " << median * 1e3 << " ms (" << flops / median / 1e9
+            << " GFLOP/s)\n";
 }
