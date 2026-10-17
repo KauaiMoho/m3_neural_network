@@ -6,7 +6,7 @@
 #include <math.h>
 
 constexpr int BLOCK_TILE = 16; // Same as blockDim, MUST be SQUARE
-constexpr int THREAD_TILE = 2; // MUST BE A factor of BLOCK_TILE
+constexpr int THREAD_TILE = 4; // MUST BE A factor of BLOCK_TILE
 
 // A, B, C - pointers in memory, where AxB = C
 // A = nxm
@@ -74,10 +74,21 @@ __global__ void matmul_kernel(const float *A, const float *B, float *C, int n, i
         __syncthreads();
 
         // Increase arithmetic intensity by computing multiple values of C per thread
-        for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
+        for (int i = 0; i < BLOCK_TILE * THREAD_TILE; ++i) {
+            float a_reg[THREAD_TILE];
+            float b_reg[THREAD_TILE];
+            
+            for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
+                a_reg[thread_tile_r] = Ashared[r_block_idx + thread_tile_r][i];
+            }
+                
             for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE; ++thread_tile_c) {
-                for (int i = 0; i < BLOCK_TILE * THREAD_TILE; ++i) {
-                    accum[thread_tile_r * THREAD_TILE + thread_tile_c] += Ashared[r_block_idx + thread_tile_r][i] * Bshared[i][c_block_idx + thread_tile_c];
+                b_reg[thread_tile_c] = Bshared[i][c_block_idx + thread_tile_c];
+            }
+
+            for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
+                for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE; ++thread_tile_c) {
+                    accum[thread_tile_r * THREAD_TILE + thread_tile_c] += a_reg[thread_tile_r] * b_reg[thread_tile_c];
                 }
             }
         }

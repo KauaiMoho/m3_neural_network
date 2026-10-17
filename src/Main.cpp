@@ -162,7 +162,7 @@ void test(ANN& model, const std::vector<Tensor>& X,
 using clk = std::chrono::steady_clock;
 
 int main() {
-  int size = 256;
+  int size = 4096;
   int dims[2] = {size, size};
   Tensor a(dims, 2, (unsigned int)17);
   Tensor b(dims, 2, (unsigned int)42);
