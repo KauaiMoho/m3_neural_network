@@ -135,7 +135,7 @@ int model_benchmark(const std::vector<int> sizes) {
   model.print_biases();
   std::cout << "\n";
 
-  constexpr int batch_size = 64;
+  constexpr int batch_size = 256;
 
   std::tuple<std::vector<Tensor>, std::vector<Tensor>> train_dataset =
       load_MNIST_data(true, batch_size);
@@ -197,8 +197,8 @@ int matrix_benchmark(int size) {
 }
 
 int main() {
-  std::vector<int> layers = {784, 1024, 1024, 512, 10};
-  int size = 2048; //128, 512, 2048, 4096
-  //return model_benchmark(layers);
-  return matrix_benchmark(size);
+  std::vector<int> layers = {784, 256, 256, 256, 10};
+  int size = 4096; //128, 512, 2048, 4096
+  return model_benchmark(layers);
+  //return matrix_benchmark(size);
 }

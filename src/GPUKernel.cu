@@ -52,7 +52,7 @@ __global__ void matmul_kernel(const float *A, const float *B, float *C, int n, i
     const int M_TILE = BLOCK_TILE * M_FACTOR; // MUST be a multiple of BLOCK_TILE - To allow each thread to work
 
     __shared__ float Ashared[S_TILE][M_TILE]; // SMEM Caching for Block tiles
-    __shared__ float Bshared[M_TILE][S_TILE];
+    __shared__ float Bshared[M_TILE][S_TILE + 16]; //Fixed shared mem bank conflicts
 
     float accum[THREAD_TILE * THREAD_TILE]; // Register level thread tiles
 
@@ -114,6 +114,24 @@ __global__ void matmul_kernel(const float *A, const float *B, float *C, int n, i
             }
         }
 
+
+        //Interesting: Coalescing Stores performs WORSE!? - from 8 to 6 TFLOPS Find out why.
+        // for (int i = 0; i < M_TILE; ++i) {
+        //     float a_reg[THREAD_TILE];
+        //     float b_reg[THREAD_TILE];
+            
+        //     for (int thread_idx = 0; thread_idx < THREAD_TILE; ++thread_idx) {
+        //         a_reg[thread_idx] = Ashared[thread_row + (thread_idx * BLOCK_TILE)][i];
+        //         b_reg[thread_idx] = Bshared[i][thread_col + (thread_idx * BLOCK_TILE)];
+        //     }
+
+        //     for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
+        //         for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE; ++thread_tile_c) {
+        //             accum[thread_tile_r * THREAD_TILE + thread_tile_c] += a_reg[thread_tile_r] * b_reg[thread_tile_c];
+        //         }
+        //     }
+        // }
+
         __syncthreads();
     }
 
@@ -124,6 +142,19 @@ __global__ void matmul_kernel(const float *A, const float *B, float *C, int n, i
             }
         }
     }
+
+    //Interesting: Coalescing Stores performs WORSE!? - from 8 to 6 TFLOPS Find out why.
+    // for (int r_shift = 0; r_shift < THREAD_TILE; ++r_shift) {
+    //     for (int c_shift = 0; c_shift < THREAD_TILE; ++c_shift) {
+    //         int accum_row = r_shift;
+    //         int accum_col = c_shift;
+    //         int C_row = blockIdx.y * (blockDim.y * THREAD_TILE) + thread_row + (r_shift * BLOCK_TILE);
+    //         int C_col = blockIdx.x * (blockDim.x * THREAD_TILE) + thread_col + (c_shift * BLOCK_TILE);
+    //         if (C_row < n && C_col < k) {
+    //             C[C_row * k + C_col] = accum[accum_row * THREAD_TILE + accum_col];
+    //         }
+    //     }
+    // }
 }
 
 extern "C" __declspec(dllexport) void cuda_kernel(
