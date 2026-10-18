@@ -127,8 +127,8 @@ void test(ANN& model, const std::vector<Tensor>& X,
 }
 
 int model_benchmark(const std::vector<int> sizes) {
-  std::vector<ANN::Activation> activations = {
-      ANN::Activation::RELU, ANN::Activation::RELU, ANN::Activation::SOFTMAX};
+  std::vector<ANN::Activation> activations(sizes.size() - 1, ANN::Activation::RELU);
+  activations.back() = ANN::Activation::SOFTMAX;
   ANN model = ANN(sizes, activations, 17);
 
   model.print_weights();
@@ -154,6 +154,9 @@ int model_benchmark(const std::vector<int> sizes) {
   model.print_weights();
   model.print_biases();
   std::cout << "\n";
+
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cout << "Time elapsed: " << duration.count() / 1000.0 << " s\n";
 
   return 0;
 }
@@ -189,11 +192,13 @@ int matrix_benchmark(int size) {
             << " GFLOP/s)\n";
   std::cout << "median: " << median * 1e3 << " ms (" << flops / median / 1e9
             << " GFLOP/s)\n";
+
+  return 0;
 }
 
 int main() {
-  std::vector<int> layers = {784, 2048, 1024, 512, 512, 64, 10};
-  int size = 256;
-  model_benchmark(layers);
-  matrix_benchmark()
+  std::vector<int> layers = {784, 1024, 1024, 512, 10};
+  int size = 2048; //128, 512, 2048, 4096
+  //return model_benchmark(layers);
+  return matrix_benchmark(size);
 }

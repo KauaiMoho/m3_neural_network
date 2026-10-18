@@ -317,7 +317,7 @@ float *Tensor::default_data_alloc() const
 
 float *Tensor::init_data_alloc(size_t size)
 {
-  aligned_data_len = size * sizeof(float);
+  aligned_data_len = (size + 32) * sizeof(float);
   size_t remainder = aligned_data_len % alignment;
   if (remainder != 0)
   {
@@ -336,7 +336,7 @@ float *Tensor::init_data_alloc(size_t size)
 
 float *Tensor::float_size_alloc(size_t size) const
 {
-  size_t a_size = size * sizeof(float);
+  size_t a_size = (size + 32) * sizeof(float);
   size_t remainder = a_size % alignment;
   if (remainder != 0)
   {
@@ -1374,37 +1374,57 @@ void Tensor::matmul_amx(const float *__restrict__ A, const float *__restrict__ B
   // TODO: compute bitmasks once at start.
   // TODO: Use extra registers for pipelining/prefetching
 
-  const size_t TILE = 32; // 2x2 16x16 tiles.
+  size_t OUTER_TILE = 64; //Heuristic based on a few tests on several matrix sizes.
+  const size_t INNER_TILE = 32; // 2x2 16x16 tiles.
   float *A_t = float_size_alloc(n * m);
   simd_transpose(A, A_t, n, m);
 
   float *tmp = float_size_alloc(32 * 32);
 
   AMX_SET();
-  for (size_t ic = 0; ic < n; ic += TILE)
+
+  for (size_t jc = 0; jc < m; jc += OUTER_TILE)
   {
-    size_t valid_a = std::min(TILE, n - ic);
-    for (size_t lc = 0; lc < k; lc += TILE)
+    size_t jE = std::min(jc + OUTER_TILE, static_cast<size_t>(m));
+    
+    for (size_t ic = 0; ic < n; ic += INNER_TILE)
     {
-      size_t valid_b = std::min(TILE, k - lc);
-      float *ptrC = &C[ic * k + lc];
+      size_t valid_a = std::min(INNER_TILE, n - ic);
 
-      for (size_t j = 0; j < m; ++j)
+      for (size_t lc = 0; lc < k; lc += INNER_TILE)
       {
-        const float *ptrA = &A_t[j * n + ic];
-        const float *ptrB = &B[j * k + lc];
-        amx_kernel_f32(ptrA, ptrB, valid_a, valid_b, j == 0);
-      }
+        size_t valid_b = std::min(INNER_TILE, k - lc);
 
-      store_amx_output(tmp);
-      
 
-      for (size_t r = 0; r < valid_a; r++)
-      {
-        for (size_t c = 0; c < valid_b; c++)
-        {
-          ptrC[r * k + c] = tmp[c * 32 + r];
+        float *ptrC = &C[ic * k + lc];
+
+        for (size_t j = jc; j < jE; ++j) {
+          const float *ptrA = &A_t[j * n + ic];
+          const float *ptrB = &B[j * k + lc];
+          amx_kernel_f32(ptrA, ptrB, valid_a, valid_b, j == jc);
+
         }
+        
+        store_amx_output(tmp);
+        
+        if (jc == 0) {
+          for (size_t r = 0; r < valid_a; r++)
+          {
+            for (size_t c = 0; c < valid_b; c++)
+            {
+              ptrC[r * k + c] = tmp[c * INNER_TILE + r];
+            }
+          }
+        } else {
+          for (size_t r = 0; r < valid_a; r++)
+          {
+            for (size_t c = 0; c < valid_b; c++)
+            {
+              ptrC[r * k + c] += tmp[c * INNER_TILE + r];
+            }
+          }
+        }
+
       }
     }
   }
