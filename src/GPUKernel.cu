@@ -6,8 +6,9 @@
 #include <math.h>
 
 constexpr int BLOCK_TILE = 16; // Same as blockDim, MUST be SQUARE
-constexpr int THREAD_TILE = 2; // MUST BE A factor of BLOCK_TILE
-constexpr int THREAD_TILE_T = 4; // MUST BE A factor of BLOCK_TILE
+constexpr int THREAD_TILE = 4; // MUST BE A factor of BLOCK_TILE
+constexpr int BLOCK_TILE_T = 16; // Same as blockDim, MUST be SQUARE
+constexpr int THREAD_TILE_T = 2; // MUST BE A factor of BLOCK_TILE
 
 // A, B, C - pointers in memory, where AxB = C
 // A = nxm
@@ -303,11 +304,6 @@ __global__ void matmul_kernel_write_coalesced(const float *A, const float *B, fl
     const int thread_col = threadIdx.x; //threadIdx.x increments the fastest. If we use threadIdx.x to access consecutive elements, can happen in one memory access (coalescing)
     //Since cols are consecutive in row major form, we want threadIdx.x to access cols (coaleced, in one access)
 
-    const int global_row = blockIdx.y * (blockDim.y * THREAD_TILE) + (thread_row * THREAD_TILE);
-    //The starting row index for the THREAD_TILE * THREAD_TILE set of elements this thread will compute.
-    const int global_col = blockIdx.x * (blockDim.x * THREAD_TILE) + (thread_col * THREAD_TILE);
-    //The starting col index for the THREAD_TILE * THREAD_TILE set of elements this thread will compute.
-
     //Amount of elements each thread LOADS (into shared mem): THREAD_TILE * M_FACTOR
     //Amount of elements each thread COMPUTES: THREAD_TILE * THREAD_TILE
 
@@ -424,15 +420,15 @@ __global__ void matmul_kernel_final(const float *A, const float *B, float *C, in
     //Amount of elements each thread COMPUTES: THREAD_TILE * THREAD_TILE
 
     const int M_FACTOR = 1;
-    const int S_TILE = BLOCK_TILE * THREAD_TILE_T; // MUST be a multiple of BLOCK_TILE
-    const int M_TILE = BLOCK_TILE * M_FACTOR; // MUST be a multiple of BLOCK_TILE - To allow each thread to work
+    const int S_TILE = BLOCK_TILE_T * THREAD_TILE_T; // MUST be a multiple of BLOCK_TILE
+    const int M_TILE = BLOCK_TILE_T * M_FACTOR; // MUST be a multiple of BLOCK_TILE - To allow each thread to work
 
     __shared__ float Ashared[S_TILE][M_TILE]; // SMEM Caching for Block tiles
     __shared__ float Bshared[M_TILE][S_TILE];
 
     float accum[THREAD_TILE_T * THREAD_TILE_T]; // Register level thread tiles
 
-    for (int i = 0; i < THREAD_TILE * THREAD_TILE; ++i) {
+    for (int i = 0; i < THREAD_TILE_T * THREAD_TILE_T; ++i) {
         accum[i] = 0;
     }
 
@@ -443,12 +439,12 @@ __global__ void matmul_kernel_final(const float *A, const float *B, float *C, in
 
         for (int r_shift = 0; r_shift < THREAD_TILE_T; ++r_shift) {
 
-            int As_row = thread_row + (r_shift * BLOCK_TILE); //As Rows = BLOCK_TILE * THREAD_TILE
+            int As_row = thread_row + (r_shift * blockDim.y); //As Rows = BLOCK_TILE * THREAD_TILE
             int A_row = blockIdx.y * S_TILE + As_row;
 
             for (int c_shift = 0; c_shift < M_FACTOR; ++c_shift) {
                 
-                int As_col = thread_col + (c_shift * BLOCK_TILE); //As Cols = BLOCK_TILE * M_FACTOR
+                int As_col = thread_col + (c_shift * blockDim.x); //As Cols = BLOCK_TILE * M_FACTOR
                 int A_col = m_tile + As_col;
                 
                 if (A_row < n && A_col < m) {
@@ -462,12 +458,12 @@ __global__ void matmul_kernel_final(const float *A, const float *B, float *C, in
         //Load Bshared
         for (int r_shift = 0; r_shift < M_FACTOR; ++r_shift) {
             
-            int Bs_row = thread_row + (r_shift * BLOCK_TILE); //Bs Rows = BLOCK_TILE * M_FACTOR
+            int Bs_row = thread_row + (r_shift * blockDim.y); //Bs Rows = BLOCK_TILE * M_FACTOR
             int B_row = m_tile + Bs_row;
 
             for (int c_shift = 0; c_shift < THREAD_TILE_T; ++c_shift) {
                
-                int Bs_col = thread_col + (c_shift * BLOCK_TILE); //Bs Cols = BLOCK_TILE * THREAD_TILE
+                int Bs_col = thread_col + (c_shift * blockDim.x); //Bs Cols = BLOCK_TILE * THREAD_TILE
                 int B_col = blockIdx.x * S_TILE + Bs_col;
 
                 if (B_row < m && B_col < k) {
@@ -530,20 +526,36 @@ extern "C" __declspec(dllexport) void cuda_kernel(
     cudaMemcpy(d_B, B, size_B, cudaMemcpyHostToDevice);
 
     dim3 blockDim(BLOCK_TILE, BLOCK_TILE);
-    dim3 gridDim(
+    dim3 blockDimFinal(BLOCK_TILE_T, BLOCK_TILE_T);
+
+    dim3 gridDimNaive(
+        (n + blockDim.x - 1) / blockDim.x,
+        (k + blockDim.y - 1) / blockDim.y
+    );
+    dim3 gridDimThreadSingle(
+        (k + blockDim.x - 1) / blockDim.x,
+        (n + blockDim.y - 1) / blockDim.y
+    );
+    dim3 gridDimThreadTile(
         (k + blockDim.x * THREAD_TILE - 1) /
             (blockDim.x * THREAD_TILE),
         (n + blockDim.y * THREAD_TILE - 1) /
             (blockDim.y * THREAD_TILE)
     );
+    dim3 gridDimThreadTileFinal(
+        (k + blockDimFinal.x * THREAD_TILE_T - 1) /
+            (blockDimFinal.x * THREAD_TILE_T),
+        (n + blockDimFinal.y * THREAD_TILE_T - 1) /
+            (blockDimFinal.y * THREAD_TILE_T)
+    );
 
-    //matmul_kernel_naive<<<gridDim, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    //matmul_kernel_coalesced<<<gridDim, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    //matmul_kernel_smem<<<gridDim, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    //matmul_kernel_tiled<<<gridDim, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    //matmul_kernel_register<<<gridDim, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    //matmul_kernel_write_coalesced<<<gridDim, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    matmul_kernel_final<<<gridDim, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    matmul_kernel_naive<<<gridDimNaive, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    //matmul_kernel_coalesced<<<gridDimThreadSingle, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    //matmul_kernel_smem<<<gridDimThreadSingle, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    //matmul_kernel_tiled<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    //matmul_kernel_register<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    //matmul_kernel_write_coalesced<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    //matmul_kernel_final<<<gridDimThreadTileFinal, blockDimFinal>>>(d_A, d_B, d_C, n, m, k);
 
     cudaDeviceSynchronize();
 
