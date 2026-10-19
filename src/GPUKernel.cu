@@ -6,9 +6,9 @@
 #include <math.h>
 
 constexpr int BLOCK_TILE = 16; // Same as blockDim, MUST be SQUARE
-constexpr int THREAD_TILE = 4; // MUST BE A factor of BLOCK_TILE
+constexpr int THREAD_TILE = 2; // MUST BE A factor of BLOCK_TILE
 constexpr int BLOCK_TILE_T = 16; // Same as blockDim, MUST be SQUARE
-constexpr int THREAD_TILE_T = 2; // MUST BE A factor of BLOCK_TILE
+constexpr int THREAD_TILE_T = 4; // MUST BE A factor of BLOCK_TILE
 
 // A, B, C - pointers in memory, where AxB = C
 // A = nxm
@@ -419,7 +419,7 @@ __global__ void matmul_kernel_final(const float *A, const float *B, float *C, in
     //Amount of elements each thread LOADS (into shared mem): THREAD_TILE * M_FACTOR
     //Amount of elements each thread COMPUTES: THREAD_TILE * THREAD_TILE
 
-    const int M_FACTOR = 1;
+    const int M_FACTOR = 4;
     const int S_TILE = BLOCK_TILE_T * THREAD_TILE_T; // MUST be a multiple of BLOCK_TILE
     const int M_TILE = BLOCK_TILE_T * M_FACTOR; // MUST be a multiple of BLOCK_TILE - To allow each thread to work
 
@@ -549,10 +549,10 @@ extern "C" __declspec(dllexport) void cuda_kernel(
             (blockDimFinal.y * THREAD_TILE_T)
     );
 
-    matmul_kernel_naive<<<gridDimNaive, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    //matmul_kernel_naive<<<gridDimNaive, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_coalesced<<<gridDimThreadSingle, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_smem<<<gridDimThreadSingle, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    //matmul_kernel_tiled<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    matmul_kernel_tiled<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_register<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_write_coalesced<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_final<<<gridDimThreadTileFinal, blockDimFinal>>>(d_A, d_B, d_C, n, m, k);
