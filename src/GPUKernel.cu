@@ -308,15 +308,15 @@ __global__ void matmul_kernel_write_coalesced(const float *A, const float *B, fl
     //Amount of elements each thread COMPUTES: THREAD_TILE * THREAD_TILE
 
     const int M_FACTOR = 1;
-    const int S_TILE = BLOCK_TILE * THREAD_TILE; // MUST be a multiple of BLOCK_TILE
-    const int M_TILE = BLOCK_TILE * M_FACTOR; // MUST be a multiple of BLOCK_TILE - To allow each thread to work
+    const int S_TILE = BLOCK_TILE_T * THREAD_TILE_T; // MUST be a multiple of BLOCK_TILE
+    const int M_TILE = BLOCK_TILE_T * M_FACTOR; // MUST be a multiple of BLOCK_TILE - To allow each thread to work
 
     __shared__ float Ashared[S_TILE][M_TILE]; // SMEM Caching for Block tiles
     __shared__ float Bshared[M_TILE][S_TILE];
 
-    float accum[THREAD_TILE * THREAD_TILE]; // Register level thread tiles
+    float accum[THREAD_TILE_T * THREAD_TILE_T]; // Register level thread tiles
 
-    for (int i = 0; i < THREAD_TILE * THREAD_TILE; ++i) {
+    for (int i = 0; i < THREAD_TILE_T * THREAD_TILE_T; ++i) {
         accum[i] = 0;
     }
 
@@ -325,14 +325,14 @@ __global__ void matmul_kernel_write_coalesced(const float *A, const float *B, fl
         //Since A and B are  BLOCK_TILE^2 * THREAD_TILE * M_FACTOR, Each thead will load S_TILE rows and M_TILE cols of A (BLOCK_TILE^2 threads)
         //Possible improvment could be flattening the loops to be 1d, decoupling from BLOCK_TILE completely. This involves bounds checking with / and %
 
-        for (int r_shift = 0; r_shift < THREAD_TILE; ++r_shift) {
+        for (int r_shift = 0; r_shift < THREAD_TILE_T; ++r_shift) {
 
-            int As_row = thread_row + (r_shift * BLOCK_TILE); //As Rows = BLOCK_TILE * THREAD_TILE
+            int As_row = thread_row + (r_shift * BLOCK_TILE_T); //As Rows = BLOCK_TILE * THREAD_TILE
             int A_row = blockIdx.y * S_TILE + As_row;
 
             for (int c_shift = 0; c_shift < M_FACTOR; ++c_shift) {
                 
-                int As_col = thread_col + (c_shift * BLOCK_TILE); //As Cols = BLOCK_TILE * M_FACTOR
+                int As_col = thread_col + (c_shift * BLOCK_TILE_T); //As Cols = BLOCK_TILE * M_FACTOR
                 int A_col = m_tile + As_col;
                 
                 if (A_row < n && A_col < m) {
@@ -346,12 +346,12 @@ __global__ void matmul_kernel_write_coalesced(const float *A, const float *B, fl
         //Load Bshared
         for (int r_shift = 0; r_shift < M_FACTOR; ++r_shift) {
 
-            int Bs_row = thread_row + (r_shift * BLOCK_TILE); //Bs Rows = BLOCK_TILE * M_FACTOR
+            int Bs_row = thread_row + (r_shift * BLOCK_TILE_T); //Bs Rows = BLOCK_TILE * M_FACTOR
             int B_row = m_tile + Bs_row;
 
-            for (int c_shift = 0; c_shift < THREAD_TILE; ++c_shift) {
+            for (int c_shift = 0; c_shift < THREAD_TILE_T; ++c_shift) {
                 
-                int Bs_col = thread_col + (c_shift * BLOCK_TILE); //Bs Cols = BLOCK_TILE * THREAD_TILE
+                int Bs_col = thread_col + (c_shift * BLOCK_TILE_T); //Bs Cols = BLOCK_TILE * THREAD_TILE
                 int B_col = blockIdx.x * S_TILE + Bs_col;
 
                 if (B_row < m && B_col < k) {
@@ -365,10 +365,10 @@ __global__ void matmul_kernel_write_coalesced(const float *A, const float *B, fl
         __syncthreads();
         
         for (int i = 0; i < M_TILE; ++i) {
-            for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
-                for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE; ++thread_tile_c) {
-                    accum[thread_tile_r * THREAD_TILE + thread_tile_c] +=
-                        Ashared[thread_row + (thread_tile_r * BLOCK_TILE)][i] * Bshared[i][thread_col + (thread_tile_c * BLOCK_TILE)];
+            for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE_T; ++thread_tile_r) {
+                for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE_T; ++thread_tile_c) {
+                    accum[thread_tile_r * THREAD_TILE_T + thread_tile_c] +=
+                        Ashared[thread_row + (thread_tile_r * BLOCK_TILE_T)][i] * Bshared[i][thread_col + (thread_tile_c * BLOCK_TILE_T)];
                 }
             }
         }
@@ -376,18 +376,18 @@ __global__ void matmul_kernel_write_coalesced(const float *A, const float *B, fl
         __syncthreads();
     }
 
-    for (int r_shift = 0; r_shift < THREAD_TILE; ++r_shift) {
+    for (int r_shift = 0; r_shift < THREAD_TILE_T; ++r_shift) {
 
         int accum_row = r_shift;
-        int C_row = blockIdx.y * (blockDim.y * THREAD_TILE) + thread_row + (accum_row * BLOCK_TILE);
+        int C_row = blockIdx.y * (blockDim.y * THREAD_TILE_T) + thread_row + (accum_row * BLOCK_TILE_T);
 
-        for (int c_shift = 0; c_shift < THREAD_TILE; ++c_shift) {
+        for (int c_shift = 0; c_shift < THREAD_TILE_T; ++c_shift) {
             
             int accum_col = c_shift;
-            int C_col = blockIdx.x * (blockDim.x * THREAD_TILE) + thread_col + (accum_col * BLOCK_TILE);
+            int C_col = blockIdx.x * (blockDim.x * THREAD_TILE_T) + thread_col + (accum_col * BLOCK_TILE_T);
 
             if (C_row < n && C_col < k) {
-                C[C_row * k + C_col] = accum[accum_row * THREAD_TILE + accum_col];
+                C[C_row * k + C_col] = accum[accum_row * THREAD_TILE_T + accum_col];
             }
         }
     }
@@ -540,7 +540,7 @@ extern "C" __declspec(dllexport) void cuda_kernel(
     //matmul_kernel_smem<<<gridDimThreadSingle, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_tiled<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_register<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    matmul_kernel_write_coalesced<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    matmul_kernel_write_coalesced<<<gridDimThreadTileFinal, blockDimFinal>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_final<<<gridDimThreadTileFinal, blockDimFinal>>>(d_A, d_B, d_C, n, m, k);
 
     cudaDeviceSynchronize();
