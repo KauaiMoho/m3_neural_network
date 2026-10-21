@@ -365,17 +365,10 @@ __global__ void matmul_kernel_write_coalesced(const float *A, const float *B, fl
         __syncthreads();
         
         for (int i = 0; i < M_TILE; ++i) {
-            float a_reg[THREAD_TILE];
-            float b_reg[THREAD_TILE];
-            
-            for (int thread_idx = 0; thread_idx < THREAD_TILE; ++thread_idx) {
-                a_reg[thread_idx] = Ashared[thread_row + (thread_idx * BLOCK_TILE)][i];
-                b_reg[thread_idx] = Bshared[i][thread_col + (thread_idx * BLOCK_TILE)];
-            }
-
             for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE; ++thread_tile_r) {
                 for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE; ++thread_tile_c) {
-                    accum[thread_tile_r * THREAD_TILE + thread_tile_c] += a_reg[thread_tile_r] * b_reg[thread_tile_c];
+                    accum[thread_tile_r * THREAD_TILE + thread_tile_c] +=
+                        Ashared[thread_row + (thread_tile_r * BLOCK_TILE)][i] * Bshared[i][thread_col + (thread_tile_c * BLOCK_TILE)];
                 }
             }
         }
@@ -477,17 +470,10 @@ __global__ void matmul_kernel_final(const float *A, const float *B, float *C, in
         __syncthreads();
 
         for (int i = 0; i < M_TILE; ++i) {
-            float a_reg[THREAD_TILE_T];
-            float b_reg[THREAD_TILE_T];
-            
-            for (int thread_idx = 0; thread_idx < THREAD_TILE_T; ++thread_idx) {
-                a_reg[thread_idx] = Ashared[(thread_row * THREAD_TILE_T) + thread_idx][i];
-                b_reg[thread_idx] = Bshared[i][(thread_col * THREAD_TILE_T) + thread_idx];
-            }
-
             for (int thread_tile_r = 0; thread_tile_r < THREAD_TILE_T; ++thread_tile_r) {
                 for (int thread_tile_c = 0; thread_tile_c < THREAD_TILE_T; ++thread_tile_c) {
-                    accum[thread_tile_r * THREAD_TILE_T + thread_tile_c] += a_reg[thread_tile_r] * b_reg[thread_tile_c];
+                    accum[thread_tile_r * THREAD_TILE_T + thread_tile_c] += 
+                        Ashared[(thread_row * THREAD_TILE_T) + thread_tile_r][i] * Bshared[i][(thread_col * THREAD_TILE_T) + thread_tile_c];
                 }
             }
         }
@@ -552,9 +538,9 @@ extern "C" __declspec(dllexport) void cuda_kernel(
     //matmul_kernel_naive<<<gridDimNaive, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_coalesced<<<gridDimThreadSingle, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_smem<<<gridDimThreadSingle, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    matmul_kernel_tiled<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    //matmul_kernel_tiled<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_register<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
-    //matmul_kernel_write_coalesced<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
+    matmul_kernel_write_coalesced<<<gridDimThreadTile, blockDim>>>(d_A, d_B, d_C, n, m, k);
     //matmul_kernel_final<<<gridDimThreadTileFinal, blockDimFinal>>>(d_A, d_B, d_C, n, m, k);
 
     cudaDeviceSynchronize();
