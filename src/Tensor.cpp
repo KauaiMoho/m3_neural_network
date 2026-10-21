@@ -3,10 +3,8 @@
 uint16_t Tensor::tile = 512;
 
 Tensor::Tensor(const int *dims_n, int dim_len, const float *data_n)
-    : dim_len(dim_len)
-{
-  if (dim_len == 0)
-  {
+    : dim_len(dim_len) {
+  if (dim_len == 0) {
     throw std::invalid_argument("Tensor dimensions cannot be empty!");
   }
 
@@ -15,8 +13,7 @@ Tensor::Tensor(const int *dims_n, int dim_len, const float *data_n)
   dims = int_size_alloc(dim_len);
 
   int pos = 1;
-  for (int i = dim_len - 1; i > 0; --i)
-  {
+  for (int i = dim_len - 1; i > 0; --i) {
     dists[i] = pos;
     dims[i] = dims_n[i];
     pos *= dims[i];
@@ -32,18 +29,15 @@ Tensor::Tensor(const int *dims_n, int dim_len, const float *data_n)
   // value. (this may depend on C++ version)
   data = init_data_alloc(data_len);
 
-  for (size_t i = 0; i < data_len; ++i)
-  {
+  for (size_t i = 0; i < data_len; ++i) {
     data[i] = data_n[i];
   }
 }
 
 Tensor::Tensor(int *dims_n, int dim_len, float *data_n, int data_len,
                int *dists_n)
-    : dim_len(dim_len), data_len(data_len)
-{
-  if (dim_len == 0)
-  {
+    : dim_len(dim_len), data_len(data_len) {
+  if (dim_len == 0) {
     throw std::invalid_argument("Tensor dimensions cannot be empty!");
   }
 
@@ -51,38 +45,32 @@ Tensor::Tensor(int *dims_n, int dim_len, float *data_n, int data_len,
 
   dims = int_size_alloc(dim_len);
 
-  for (size_t i = 0; i < dim_len; ++i)
-  {
+  for (size_t i = 0; i < dim_len; ++i) {
     dists[i] = dists_n[i];
     dims[i] = dims_n[i];
   }
 
   data = init_data_alloc(data_len);
 
-  for (size_t i = 0; i < data_len; ++i)
-  {
+  for (size_t i = 0; i < data_len; ++i) {
     data[i] = data_n[i];
   }
 }
 
 Tensor::Tensor(int *dims_n, int dim_len, float *data_n, bool copy)
-    : dim_len(dim_len)
-{
-  if (dim_len == 0)
-  {
+    : dim_len(dim_len) {
+  if (dim_len == 0) {
     throw std::invalid_argument("Tensor dimensions cannot be empty!");
   }
 
-  if (copy)
-  {
+  if (copy) {
     // Same as public constructor - can change later to get of repeated code
     dists = int_size_alloc(dim_len);
 
     dims = int_size_alloc(dim_len);
 
     int pos = 1;
-    for (int i = dim_len - 1; i > 0; --i)
-    {
+    for (int i = dim_len - 1; i > 0; --i) {
       dists[i] = pos;
       dims[i] = dims_n[i];
       pos *= dims[i];
@@ -93,13 +81,10 @@ Tensor::Tensor(int *dims_n, int dim_len, float *data_n, bool copy)
 
     data = init_data_alloc(data_len);
 
-    for (size_t i = 0; i < data_len; ++i)
-    {
+    for (size_t i = 0; i < data_len; ++i) {
       data[i] = data_n[i];
     }
-  }
-  else
-  {
+  } else {
     dims = dims_n;
 
     // NEEDS TO BE ALIGNED
@@ -108,8 +93,7 @@ Tensor::Tensor(int *dims_n, int dim_len, float *data_n, bool copy)
     dists = int_size_alloc(dim_len);
 
     int pos = 1;
-    for (int i = dim_len - 1; i > 0; --i)
-    {
+    for (int i = dim_len - 1; i > 0; --i) {
       dists[i] = pos;
       pos *= dims[i];
     }
@@ -118,17 +102,14 @@ Tensor::Tensor(int *dims_n, int dim_len, float *data_n, bool copy)
 
     aligned_data_len = data_len * sizeof(float);
     size_t remainder = aligned_data_len % alignment;
-    if (remainder != 0)
-    {
+    if (remainder != 0) {
       aligned_data_len += alignment - remainder;
     }
   }
 }
 
-Tensor::Tensor(const int *dims_n, int dim_len, float val) : dim_len(dim_len)
-{
-  if (dim_len == 0)
-  {
+Tensor::Tensor(const int *dims_n, int dim_len, float val) : dim_len(dim_len) {
+  if (dim_len == 0) {
     throw std::invalid_argument("Tensor dimensions cannot be empty!");
   }
 
@@ -137,8 +118,7 @@ Tensor::Tensor(const int *dims_n, int dim_len, float val) : dim_len(dim_len)
   dims = int_size_alloc(dim_len);
 
   int pos = 1;
-  for (int i = dim_len - 1; i > 0; --i)
-  {
+  for (int i = dim_len - 1; i > 0; --i) {
     dists[i] = pos;
     dims[i] = dims_n[i];
     pos *= dims[i];
@@ -149,22 +129,18 @@ Tensor::Tensor(const int *dims_n, int dim_len, float val) : dim_len(dim_len)
 
   data = init_data_alloc(data_len);
 
-  for (size_t i = 0; i < data_len; ++i)
-  {
+  for (size_t i = 0; i < data_len; ++i) {
     data[i] = val;
   }
 }
 
 Tensor::Tensor(const int *dims_n, int dim_len, unsigned int random_seed)
-    : dim_len(dim_len)
-{
-  if (dim_len == 0)
-  {
+    : dim_len(dim_len) {
+  if (dim_len == 0) {
     throw std::invalid_argument("Tensor dimensions cannot be empty!");
   }
 
-  if (random_seed == 0)
-  {
+  if (random_seed == 0) {
     std::random_device rd;
     random_seed = rd();
   }
@@ -176,8 +152,7 @@ Tensor::Tensor(const int *dims_n, int dim_len, unsigned int random_seed)
   dims = int_size_alloc(dim_len);
 
   int pos = 1;
-  for (int i = dim_len - 1; i > 0; --i)
-  {
+  for (int i = dim_len - 1; i > 0; --i) {
     dists[i] = pos;
     dims[i] = dims_n[i];
     pos *= dims[i];
@@ -188,39 +163,32 @@ Tensor::Tensor(const int *dims_n, int dim_len, unsigned int random_seed)
 
   data = init_data_alloc(data_len);
 
-  for (size_t i = 0; i < data_len; ++i)
-  {
+  for (size_t i = 0; i < data_len; ++i) {
     data[i] = dist(gen);
   }
 }
 
 Tensor::Tensor(const Tensor &other)
-    : dim_len(other.get_dim_len()),
-      data_len(other.data_len),
-      aligned_data_len(other.aligned_data_len)
-{
+    : dim_len(other.get_dim_len()), data_len(other.data_len),
+      aligned_data_len(other.aligned_data_len) {
   dists = int_size_alloc(dim_len);
 
   dims = int_size_alloc(dim_len);
 
-  for (size_t i = 0; i < dim_len; ++i)
-  {
+  for (size_t i = 0; i < dim_len; ++i) {
     dists[i] = other.dists[i];
     dims[i] = other.dims[i];
   }
 
   data = default_data_alloc();
 
-  for (size_t i = 0; i < data_len; ++i)
-  {
+  for (size_t i = 0; i < data_len; ++i) {
     data[i] = other.data[i];
   }
 }
 
-Tensor &Tensor::operator=(const Tensor &other)
-{
-  if (this == &other)
-  {
+Tensor &Tensor::operator=(const Tensor &other) {
+  if (this == &other) {
     return *this;
   }
 
@@ -236,16 +204,14 @@ Tensor &Tensor::operator=(const Tensor &other)
 
   dims = int_size_alloc(dim_len);
 
-  for (size_t i = 0; i < dim_len; ++i)
-  {
+  for (size_t i = 0; i < dim_len; ++i) {
     dists[i] = other.dists[i];
     dims[i] = other.dims[i];
   }
 
   data = default_data_alloc();
 
-  for (size_t i = 0; i < data_len; ++i)
-  {
+  for (size_t i = 0; i < data_len; ++i) {
     data[i] = other.data[i];
   }
 
@@ -253,13 +219,9 @@ Tensor &Tensor::operator=(const Tensor &other)
 }
 
 Tensor::Tensor(Tensor &&other) noexcept
-    : dim_len(other.get_dim_len()),
-      data_len(other.data_len),
-      aligned_data_len(other.aligned_data_len),
-      dims(other.dims),
-      dists(other.dists),
-      data(other.data)
-{
+    : dim_len(other.get_dim_len()), data_len(other.data_len),
+      aligned_data_len(other.aligned_data_len), dims(other.dims),
+      dists(other.dists), data(other.data) {
   other.dim_len = 0;
   other.data_len = 0;
   other.aligned_data_len = 0;
@@ -268,10 +230,8 @@ Tensor::Tensor(Tensor &&other) noexcept
   other.data = nullptr;
 }
 
-Tensor &Tensor::operator=(Tensor &&other) noexcept
-{
-  if (this == &other)
-  {
+Tensor &Tensor::operator=(Tensor &&other) noexcept {
+  if (this == &other) {
     return *this;
   }
 
@@ -296,114 +256,94 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept
   return *this;
 }
 
-Tensor::~Tensor()
-{
+Tensor::~Tensor() {
   free(dims);
   free(dists);
   tensor_free(data);
 }
 
-float *Tensor::default_data_alloc() const
-{
+float *Tensor::default_data_alloc() const {
   float *arr = (float *)tensor_alloc(alignment, aligned_data_len);
 
-  if (arr == nullptr)
-  {
+  if (arr == nullptr) {
     throw std::runtime_error("Default data memory allocation error");
   }
 
   return arr;
 }
 
-float *Tensor::init_data_alloc(size_t size)
-{
+float *Tensor::init_data_alloc(size_t size) {
   aligned_data_len = (size + 32) * sizeof(float);
   size_t remainder = aligned_data_len % alignment;
-  if (remainder != 0)
-  {
+  if (remainder != 0) {
     aligned_data_len += alignment - remainder;
   }
 
   float *arr = (float *)tensor_alloc(alignment, aligned_data_len);
 
-  if (arr == nullptr)
-  {
+  if (arr == nullptr) {
     throw std::runtime_error("Init data memory allocation error");
   }
 
   return arr;
 }
 
-float *Tensor::float_size_alloc(size_t size) const
-{
+float *Tensor::float_size_alloc(size_t size) const {
   size_t a_size = (size + 32) * sizeof(float);
   size_t remainder = a_size % alignment;
-  if (remainder != 0)
-  {
+  if (remainder != 0) {
     a_size += alignment - remainder;
   }
 
   float *arr = (float *)tensor_alloc(alignment, a_size);
 
-  if (arr == nullptr)
-  {
+  if (arr == nullptr) {
     throw std::runtime_error("Float memory allocation error");
   }
 
   return arr;
 }
 
-int *Tensor::int_size_alloc(size_t size) const
-{
+int *Tensor::int_size_alloc(size_t size) const {
   int *arr = (int *)malloc(size * sizeof(int));
 
-  if (arr == nullptr)
-  {
+  if (arr == nullptr) {
     throw std::runtime_error("Int memory allocation error");
   }
 
   return arr;
 }
 
-void Tensor::print_array(const float *arr, int len, int max) const
-{
+void Tensor::print_array(const float *arr, int len, int max) const {
   int end = std::min(len, max);
-  for (size_t i = 0; i < end; ++i)
-  {
+  for (size_t i = 0; i < end; ++i) {
     std::cout << arr[i];
-    if (i < end - 1)
-    {
+    if (i < end - 1) {
       std::cout << ", ";
     }
   }
   std::cout << "\n";
 }
 
-void Tensor::print_array(const int *arr, int len, int max) const
-{
+void Tensor::print_array(const int *arr, int len, int max) const {
   int end = std::min(len, max);
-  for (size_t i = 0; i < end; ++i)
-  {
+  for (size_t i = 0; i < end; ++i) {
     std::cout << arr[i];
-    if (i < end - 1)
-    {
+    if (i < end - 1) {
       std::cout << ", ";
     }
   }
   std::cout << "\n";
 }
 
-int Tensor::convert_idx(const std::initializer_list<int> &pos) const
-{
+int Tensor::convert_idx(const std::initializer_list<int> &pos) const {
   // Converts between regular indexing (nd) and stride position (1d)
   int idx = 0;
   int i = 0;
-  if (pos.size() != static_cast<size_t>(dim_len))
-  {
+  if (pos.size() != static_cast<size_t>(dim_len)) {
     throw std::invalid_argument("Wrong number of indices!");
   }
-  for (int value : pos)
-  {
+  for (int value : pos) {
     idx += value * dists[i];
     ++i;
   }
@@ -413,40 +353,29 @@ int Tensor::convert_idx(const std::initializer_list<int> &pos) const
 }
 
 int *Tensor::get_broadcasted_strides(const int *dims_new,
-                                     int dim_len_new) const
-{
+                                     int dim_len_new) const {
   // Gets the new strides (row major, flattened) for a given broadcast
-  if (dim_len_new >= dim_len)
-  {
+  if (dim_len_new >= dim_len) {
     int *dists_new = int_size_alloc(dim_len_new);
     int diff = dim_len_new - dim_len;
 
-    for (int i = dim_len_new - 1; i >= 0; --i)
-    {
+    for (int i = dim_len_new - 1; i >= 0; --i) {
       // Get correct indexing between two sets of dimensions (dimension size may
       // be unequal)
       int i_old = i - diff;
-      if (i_old < 0)
-      {
+      if (i_old < 0) {
         // If the index is out of bounds for the shorter dimension, set its
         // stride to 0 (copy axis along dimension)
         dists_new[i] = 0;
-      }
-      else
-      {
+      } else {
         // If the dimensions match up, the strides will stay the same
-        if (dims[i_old] == dims_new[i])
-        {
+        if (dims[i_old] == dims_new[i]) {
           dists_new[i] = dists[i_old];
           // If the dimension being broadcasted is size 1, the elements can just
           // be copied along axis (stride 0)
-        }
-        else if (dims[i_old] == 1)
-        {
+        } else if (dims[i_old] == 1) {
           dists_new[i] = 0;
-        }
-        else
-        {
+        } else {
           // Dimensions incompatible, cannot be broadcasted
           // Typically will not run since this is already checked during
           // broadcasting dimension computation, but adds fallback error
@@ -458,15 +387,12 @@ int *Tensor::get_broadcasted_strides(const int *dims_new,
       }
     }
     return dists_new;
-  }
-  else
-  {
+  } else {
     throw std::invalid_argument("Invalid dimension size for broadcasting!");
   }
 }
 
-std::tuple<int, int, int> Tensor::get_matmul_tile(int n, int m, int k) const
-{
+std::tuple<int, int, int> Tensor::get_matmul_tile(int n, int m, int k) const {
   // Use loop order to optimize L Cache loading.
   // Use sysctl -a | grep cache to check Apple Silicon Cache Size
   // use sysctl -a | grep perflevel to check compute clusters
@@ -478,13 +404,12 @@ std::tuple<int, int, int> Tensor::get_matmul_tile(int n, int m, int k) const
   // Choose between L1 and L2 cache based on matrix size
   size_t cache_line_floats = cache_line_size / sizeof(float);
   size_t usable_cache_bytes;
-  if (n * m * k * sizeof(float) <= L1_bytes)
-  { // Heuristic, very conservative, estimating based on general dimensions
+  if (n * m * k * sizeof(float) <=
+      L1_bytes) { // Heuristic, very conservative, estimating based on general
+                  // dimensions
     // Only use max 2/3 of the available bytes in a given cache.
     usable_cache_bytes = L1_bytes / 1.5;
-  }
-  else
-  {
+  } else {
     usable_cache_bytes = L2_bytes / 1.5;
   }
 
@@ -492,7 +417,8 @@ std::tuple<int, int, int> Tensor::get_matmul_tile(int n, int m, int k) const
 
   // Assume T_m = m since we dont tile m for inner product.
 
-  // How many rows of A and columns of B can we load at once so that the CPU doesn’t go to main memory too often?
+  // How many rows of A and columns of B can we load at once so that the CPU
+  // doesn’t go to main memory too often?
 
   //  m * (Tn + Tk) = usable_cache_floats
   //  (Tn + Tk) = usable_cache_floats / m
@@ -508,12 +434,9 @@ std::tuple<int, int, int> Tensor::get_matmul_tile(int n, int m, int k) const
 
   // Only used in outer product, placeholder
   int T_m;
-  if (m * sizeof(float) < (L2_bytes / 4))
-  {
+  if (m * sizeof(float) < (L2_bytes / 4)) {
     T_m = m;
-  }
-  else
-  {
+  } else {
     T_m = 1024;
   }
 
@@ -526,19 +449,16 @@ std::tuple<int, int, int> Tensor::get_matmul_tile(int n, int m, int k) const
   T_m -= T_m % cache_line_floats;
   T_k -= T_k % cache_line_floats;
 
-  if (T_n <= 0)
-  {
+  if (T_n <= 0) {
     // If tile size is small, stick with cache line float size.
     T_n = cache_line_floats;
   }
 
-  if (T_m <= 0)
-  {
+  if (T_m <= 0) {
     T_m = cache_line_floats;
   }
 
-  if (T_k <= 0)
-  {
+  if (T_k <= 0) {
     T_k = cache_line_floats;
   }
 
@@ -552,8 +472,7 @@ void Tensor::matmul_cpu_batched(const float *__restrict__ A,
                                 const float *__restrict__ B,
                                 float *__restrict__ C, const int *this_dists,
                                 const int *other_dists, int n, int m, int k,
-                                int z) const
-{
+                                int z) const {
   std::tuple<int, int, int> tile_data = get_matmul_tile(n, m, k);
   int T_n = std::get<0>(tile_data);
   int T_k = std::get<2>(tile_data);
@@ -571,31 +490,25 @@ void Tensor::matmul_cpu_batched(const float *__restrict__ A,
   //  2. Contiguous reading allows for direct vectorization, as SIMD loads
   //  require it.
   simd_transpose(B, B_t, m, k, z, other_dists);
-  for (size_t ic = 0; ic < n; ic += T_n)
-  {
+  for (size_t ic = 0; ic < n; ic += T_n) {
     size_t iE = std::min(ic + T_n, static_cast<size_t>(n));
-    for (size_t lc = 0; lc < k; lc += T_k)
-    {
+    for (size_t lc = 0; lc < k; lc += T_k) {
       size_t lE = std::min(lc + T_k, static_cast<size_t>(k));
-      for (size_t i = ic; i < iE; ++i)
-      {
+      for (size_t i = ic; i < iE; ++i) {
         const float *ptrA = &A[z * this_dists[0] + i * this_dists[1]];
-        for (size_t l = lc; l < lE; ++l)
-        {
+        for (size_t l = lc; l < lE; ++l) {
           float sum = 0;
           float32x4_t acc = vdupq_n_f32(0.0f);
 
           const float *ptrB = &B_t[l * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j * this_dists[2]);
             float32x4_t b = vld1q_f32(ptrB + j);
             acc = vfmaq_f32(acc, a, b);
           }
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             sum += ptrA[j * this_dists[2]] * ptrB[j];
           }
 
@@ -610,8 +523,7 @@ void Tensor::matmul_cpu_batched(const float *__restrict__ A,
 
 #ifdef WINDOWS_VER
 void Tensor::matmul_cuda(const float *A, const float *B, float *C, int n, int m,
-                         int k) const
-{
+                         int k) const {
   ::cuda_kernel(A, B, C, n, m, k);
 }
 #endif
@@ -619,8 +531,7 @@ void Tensor::matmul_cuda(const float *A, const float *B, float *C, int n, int m,
 void Tensor::matmul_cpu_outer(const float *__restrict__ A,
                               const float *__restrict__ B,
                               float *__restrict__ C, int n, int m,
-                              int k) const
-{
+                              int k) const {
   // A = nxm
   // B = mxk
   // C = nxk
@@ -638,20 +549,15 @@ void Tensor::matmul_cpu_outer(const float *__restrict__ A,
   memset(C, 0, n * k * sizeof(float));
 
   simd_transpose(A, A_t, n, m);
-  for (size_t jc = 0; jc < m; jc += T_m)
-  {
+  for (size_t jc = 0; jc < m; jc += T_m) {
     size_t jE = std::min(jc + T_m, static_cast<size_t>(m));
-    for (size_t ic = 0; ic < n; ic += T_n)
-    {
+    for (size_t ic = 0; ic < n; ic += T_n) {
       size_t iE = std::min(ic + T_n, static_cast<size_t>(n));
-      for (size_t lc = 0; lc < k; lc += T_k)
-      {
+      for (size_t lc = 0; lc < k; lc += T_k) {
         size_t lE = std::min(lc + T_k, static_cast<size_t>(k));
 
-        for (size_t j = jc; j < jE; ++j)
-        { // m
-          for (size_t i = ic; i < iE; ++i)
-          { // n
+        for (size_t j = jc; j < jE; ++j) {   // m
+          for (size_t i = ic; i < iE; ++i) { // n
 
             float aVal =
                 A_t[j * n +
@@ -662,8 +568,7 @@ void Tensor::matmul_cpu_outer(const float *__restrict__ A,
             float *ptrC = &C[i * k + lc];
 
             size_t l = lc;
-            for (; l + 3 < lE; l += 4)
-            {
+            for (; l + 3 < lE; l += 4) {
               float32x4_t b = vld1q_f32(ptrB);
               float32x4_t c = vld1q_f32(ptrC);
               c = vmlaq_f32(c, a, b);
@@ -673,8 +578,7 @@ void Tensor::matmul_cpu_outer(const float *__restrict__ A,
             }
 
             // Scalar edge case handling
-            for (; l < (lE - lc); ++l)
-            {
+            for (; l < (lE - lc); ++l) {
               (*ptrC) += aVal * (*ptrB);
               ptrB += 1;
               ptrC += 1;
@@ -690,8 +594,7 @@ void Tensor::matmul_cpu_outer(const float *__restrict__ A,
 void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
                                      const float *__restrict__ B,
                                      float *__restrict__ C, int n, int m,
-                                     int k) const
-{
+                                     int k) const {
   // A = nxm
   // B = mxk
   // C = nxk
@@ -707,19 +610,15 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
 
   simd_transpose(B, B_t, m, k);
 
-  for (size_t ic = 0; ic < n; ic += T_n)
-  {
+  for (size_t ic = 0; ic < n; ic += T_n) {
     size_t iE = std::min(ic + T_n, static_cast<size_t>(n));
-    for (size_t lc = 0; lc < k; lc += T_k)
-    {
+    for (size_t lc = 0; lc < k; lc += T_k) {
       size_t lE = std::min(lc + T_k, static_cast<size_t>(k));
-      for (size_t i = ic; i < iE; ++i)
-      {
+      for (size_t i = ic; i < iE; ++i) {
         size_t l = lc;
         const float *ptrA = &A[i * m];
 
-        for (; l + 15 < lE; l += 16)
-        {
+        for (; l + 15 < lE; l += 16) {
           float32x4_t acc0 = vdupq_n_f32(0.0f);
           float32x4_t acc1 = vdupq_n_f32(0.0f);
           float32x4_t acc2 = vdupq_n_f32(0.0f);
@@ -755,8 +654,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           const float *ptrB15 = &B_t[(l + 15) * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
 
             acc0 = vfmaq_f32(acc0, a, vld1q_f32(ptrB0 + j));
@@ -794,8 +692,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           float s14 = vaddvq_f32(acc14);
           float s15 = vaddvq_f32(acc15);
 
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             float a_val = ptrA[j];
             s0 += a_val * ptrB0[j];
             s1 += a_val * ptrB1[j];
@@ -834,8 +731,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
         }
 
         for (; l + 7 < lE;
-             l += 8)
-        { // Better use of A, use it 4 times before reload
+             l += 8) { // Better use of A, use it 4 times before reload
 
           float32x4_t acc0 = vdupq_n_f32(0.0f);
           float32x4_t acc1 = vdupq_n_f32(0.0f);
@@ -856,8 +752,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           const float *ptrB7 = &B_t[(l + 7) * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
 
             acc0 = vfmaq_f32(acc0, a, vld1q_f32(ptrB0 + j));
@@ -879,8 +774,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           float s6 = vaddvq_f32(acc6);
           float s7 = vaddvq_f32(acc7);
 
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             float a_val = ptrA[j];
             s0 += a_val * ptrB0[j];
             s1 += a_val * ptrB1[j];
@@ -902,8 +796,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           C[i * k + (l + 7)] = s7;
         }
 
-        for (; l + 3 < lE; l += 4)
-        {
+        for (; l + 3 < lE; l += 4) {
           float32x4_t acc0 = vdupq_n_f32(0.0f);
           float32x4_t acc1 = vdupq_n_f32(0.0f);
           float32x4_t acc2 = vdupq_n_f32(0.0f);
@@ -915,8 +808,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           const float *ptrB3 = &B_t[(l + 3) * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
 
             acc0 = vfmaq_f32(acc0, a, vld1q_f32(ptrB0 + j));
@@ -930,8 +822,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           float s2 = vaddvq_f32(acc2);
           float s3 = vaddvq_f32(acc3);
 
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             float a_val = ptrA[j];
             s0 += a_val * ptrB0[j];
             s1 += a_val * ptrB1[j];
@@ -945,8 +836,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           C[i * k + (l + 3)] = s3;
         }
 
-        for (; l < lE; ++l)
-        { // matmul_cpu handling
+        for (; l < lE; ++l) { // matmul_cpu handling
 
           float32x4_t acc = vdupq_n_f32(0.0f);
 
@@ -954,14 +844,12 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
           const float *ptrB = &B_t[l * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
             float32x4_t b = vld1q_f32(ptrB + j);
             acc = vfmaq_f32(acc, a, b);
           }
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             sum += ptrA[j] * ptrB[j];
           }
 
@@ -977,8 +865,7 @@ void Tensor::matmul_cpu_unrolled_16x(const float *__restrict__ A,
 void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
                                     const float *__restrict__ B,
                                     float *__restrict__ C, int n, int m,
-                                    int k) const
-{
+                                    int k) const {
   // A = nxm
   // B = mxk
   // C = nxk
@@ -994,20 +881,16 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
 
   simd_transpose(B, B_t, m, k);
 
-  for (size_t ic = 0; ic < n; ic += T_n)
-  {
+  for (size_t ic = 0; ic < n; ic += T_n) {
     size_t iE = std::min(ic + T_n, static_cast<size_t>(n));
-    for (size_t lc = 0; lc < k; lc += T_k)
-    {
+    for (size_t lc = 0; lc < k; lc += T_k) {
       size_t lE = std::min(lc + T_k, static_cast<size_t>(k));
-      for (size_t i = ic; i < iE; ++i)
-      {
+      for (size_t i = ic; i < iE; ++i) {
         size_t l = lc;
         const float *ptrA = &A[i * m];
 
         for (; l + 7 < lE;
-             l += 8)
-        { // Better use of A, use it 4 times before reload
+             l += 8) { // Better use of A, use it 4 times before reload
 
           float32x4_t acc0 = vdupq_n_f32(0.0f);
           float32x4_t acc1 = vdupq_n_f32(0.0f);
@@ -1028,8 +911,7 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
           const float *ptrB7 = &B_t[(l + 7) * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
 
             acc0 = vfmaq_f32(acc0, a, vld1q_f32(ptrB0 + j));
@@ -1051,8 +933,7 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
           float s6 = vaddvq_f32(acc6);
           float s7 = vaddvq_f32(acc7);
 
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             float a_val = ptrA[j];
             s0 += a_val * ptrB0[j];
             s1 += a_val * ptrB1[j];
@@ -1074,8 +955,7 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
           C[i * k + (l + 7)] = s7;
         }
 
-        for (; l + 3 < lE; l += 4)
-        {
+        for (; l + 3 < lE; l += 4) {
           float32x4_t acc0 = vdupq_n_f32(0.0f);
           float32x4_t acc1 = vdupq_n_f32(0.0f);
           float32x4_t acc2 = vdupq_n_f32(0.0f);
@@ -1087,8 +967,7 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
           const float *ptrB3 = &B_t[(l + 3) * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
 
             acc0 = vfmaq_f32(acc0, a, vld1q_f32(ptrB0 + j));
@@ -1102,8 +981,7 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
           float s2 = vaddvq_f32(acc2);
           float s3 = vaddvq_f32(acc3);
 
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             float a_val = ptrA[j];
             s0 += a_val * ptrB0[j];
             s1 += a_val * ptrB1[j];
@@ -1117,8 +995,7 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
           C[i * k + (l + 3)] = s3;
         }
 
-        for (; l < lE; ++l)
-        { // matmul_cpu handling
+        for (; l < lE; ++l) { // matmul_cpu handling
 
           float32x4_t acc = vdupq_n_f32(0.0f);
 
@@ -1126,14 +1003,12 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
           const float *ptrB = &B_t[l * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
             float32x4_t b = vld1q_f32(ptrB + j);
             acc = vfmaq_f32(acc, a, b);
           }
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             sum += ptrA[j] * ptrB[j];
           }
 
@@ -1149,8 +1024,7 @@ void Tensor::matmul_cpu_unrolled_8x(const float *__restrict__ A,
 void Tensor::matmul_cpu_unrolled_4x(const float *__restrict__ A,
                                     const float *__restrict__ B,
                                     float *__restrict__ C, int n, int m,
-                                    int k) const
-{
+                                    int k) const {
   // A = nxm
   // B = mxk
   // C = nxk
@@ -1166,20 +1040,16 @@ void Tensor::matmul_cpu_unrolled_4x(const float *__restrict__ A,
 
   simd_transpose(B, B_t, m, k);
 
-  for (size_t ic = 0; ic < n; ic += T_n)
-  {
+  for (size_t ic = 0; ic < n; ic += T_n) {
     size_t iE = std::min(ic + T_n, static_cast<size_t>(n));
-    for (size_t lc = 0; lc < k; lc += T_k)
-    {
+    for (size_t lc = 0; lc < k; lc += T_k) {
       size_t lE = std::min(lc + T_k, static_cast<size_t>(k));
-      for (size_t i = ic; i < iE; ++i)
-      {
+      for (size_t i = ic; i < iE; ++i) {
         size_t l = lc;
         const float *ptrA = &A[i * m];
 
         for (; l + 3 < lE;
-             l += 4)
-        { // Better use of A, use it 4 times before reload
+             l += 4) { // Better use of A, use it 4 times before reload
 
           float32x4_t acc0 = vdupq_n_f32(0.0f);
           float32x4_t acc1 = vdupq_n_f32(0.0f);
@@ -1192,8 +1062,7 @@ void Tensor::matmul_cpu_unrolled_4x(const float *__restrict__ A,
           const float *ptrB3 = &B_t[(l + 3) * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
 
             acc0 = vfmaq_f32(acc0, a, vld1q_f32(ptrB0 + j));
@@ -1207,8 +1076,7 @@ void Tensor::matmul_cpu_unrolled_4x(const float *__restrict__ A,
           float s2 = vaddvq_f32(acc2);
           float s3 = vaddvq_f32(acc3);
 
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             float a_val = ptrA[j];
             s0 += a_val * ptrB0[j];
             s1 += a_val * ptrB1[j];
@@ -1222,8 +1090,7 @@ void Tensor::matmul_cpu_unrolled_4x(const float *__restrict__ A,
           C[i * k + (l + 3)] = s3;
         }
 
-        for (; l < lE; ++l)
-        { // matmul_cpu handling
+        for (; l < lE; ++l) { // matmul_cpu handling
 
           float32x4_t acc = vdupq_n_f32(0.0f);
 
@@ -1231,14 +1098,12 @@ void Tensor::matmul_cpu_unrolled_4x(const float *__restrict__ A,
           const float *ptrB = &B_t[l * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
             float32x4_t b = vld1q_f32(ptrB + j);
             acc = vfmaq_f32(acc, a, b);
           }
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             sum += ptrA[j] * ptrB[j];
           }
 
@@ -1262,8 +1127,7 @@ void Tensor::matmul_cpu_unrolled_4x(const float *__restrict__ A,
 void Tensor::matmul_cpu_tiled_old(const float *__restrict__ A,
                                   const float *__restrict__ B,
                                   float *__restrict__ C, int n, int m,
-                                  int k) const
-{
+                                  int k) const {
   constexpr size_t L1_bytes = 64 * 1024;
   constexpr size_t L2_bytes = 4 * 1024 * 1024;
   constexpr int cache_line_size = 128;
@@ -1271,13 +1135,10 @@ void Tensor::matmul_cpu_tiled_old(const float *__restrict__ A,
   // Choose between L1 and L2 cache based on matrix size
   size_t cache_line_floats = cache_line_size / sizeof(float);
   size_t usable_cache_bytes;
-  if ((n * m + m * k + n * k) * sizeof(float) <= L1_bytes)
-  {
+  if ((n * m + m * k + n * k) * sizeof(float) <= L1_bytes) {
     // Only use max 2/3 of the available bytes in a given cache.
     usable_cache_bytes = L1_bytes / 1.5;
-  }
-  else
-  {
+  } else {
     usable_cache_bytes = L2_bytes / 1.5;
   }
 
@@ -1286,29 +1147,23 @@ void Tensor::matmul_cpu_tiled_old(const float *__restrict__ A,
   int mat_tile = static_cast<int>(sqrt(usable_cache_floats / 3));
 
   mat_tile -= mat_tile % cache_line_floats;
-  if (mat_tile == 0)
-  {
+  if (mat_tile == 0) {
     mat_tile = cache_line_floats;
   }
 
-  for (size_t ic = 0; ic < n; ic += mat_tile)
-  {
+  for (size_t ic = 0; ic < n; ic += mat_tile) {
     size_t iE = std::min(ic + mat_tile, static_cast<size_t>(n));
 
-    for (size_t lc = 0; lc < k; lc += mat_tile)
-    {
+    for (size_t lc = 0; lc < k; lc += mat_tile) {
       size_t lE = std::min(lc + mat_tile, static_cast<size_t>(k));
 
-      for (size_t i = ic; i < iE; ++i)
-      {
+      for (size_t i = ic; i < iE; ++i) {
         const float *ptrA = &A[i * m];
-        for (size_t l = lc; l < lE; ++l)
-        {
+        for (size_t l = lc; l < lE; ++l) {
           float sum = 0;
           const float *ptrB = &B[l];
 
-          for (size_t j = 0; j < m; ++j)
-          {
+          for (size_t j = 0; j < m; ++j) {
             sum += ptrA[j] * ptrB[j * k];
           }
 
@@ -1322,8 +1177,7 @@ void Tensor::matmul_cpu_tiled_old(const float *__restrict__ A,
 void Tensor::matmul_cpu_tiled(const float *__restrict__ A,
                               const float *__restrict__ B,
                               float *__restrict__ C, int n, int m,
-                              int k) const
-{
+                              int k) const {
   // A = nxm
   // B = mxk
   // C = nxk
@@ -1335,24 +1189,19 @@ void Tensor::matmul_cpu_tiled(const float *__restrict__ A,
   int T_n = std::get<0>(tile_data);
   int T_k = std::get<2>(tile_data);
 
-  for (size_t ic = 0; ic < n; ic += T_n)
-  {
+  for (size_t ic = 0; ic < n; ic += T_n) {
     size_t iE = std::min(ic + T_n, static_cast<size_t>(n));
 
-    for (size_t lc = 0; lc < k; lc += T_k)
-    {
+    for (size_t lc = 0; lc < k; lc += T_k) {
       size_t lE = std::min(lc + T_k, static_cast<size_t>(k));
 
-      for (size_t i = ic; i < iE; ++i)
-      {
+      for (size_t i = ic; i < iE; ++i) {
         const float *ptrA = &A[i * m];
-        for (size_t l = lc; l < lE; ++l)
-        {
+        for (size_t l = lc; l < lE; ++l) {
           float sum = 0;
           const float *ptrB = &B[l];
 
-          for (size_t j = 0; j < m; ++j)
-          {
+          for (size_t j = 0; j < m; ++j) {
             sum += ptrA[j] * ptrB[j * k];
           }
 
@@ -1363,18 +1212,21 @@ void Tensor::matmul_cpu_tiled(const float *__restrict__ A,
   }
 }
 
-// void Tensor::matmul_metal(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C, int n, int m, int k) const {
+// void Tensor::matmul_metal(const float* __restrict__ A, const float*
+// __restrict__ B, float* __restrict__ C, int n, int m, int k) const {
 //
 // }
 
 #ifndef WINDOWS_VER
-void Tensor::matmul_amx(const float *__restrict__ A, const float *__restrict__ B, float *__restrict__ C, int n, int m, int k) const
-{
+void Tensor::matmul_amx(const float *__restrict__ A,
+                        const float *__restrict__ B, float *__restrict__ C,
+                        int n, int m, int k) const {
 
   // TODO: compute bitmasks once at start.
   // TODO: Use extra registers for pipelining/prefetching
 
-  size_t OUTER_TILE = 64; //Heuristic based on a few tests on several matrix sizes.
+  size_t OUTER_TILE =
+      64; // Heuristic based on a few tests on several matrix sizes.
   const size_t INNER_TILE = 32; // 2x2 16x16 tiles.
   float *A_t = float_size_alloc(n * m);
   simd_transpose(A, A_t, n, m);
@@ -1383,18 +1235,14 @@ void Tensor::matmul_amx(const float *__restrict__ A, const float *__restrict__ B
 
   AMX_SET();
 
-  for (size_t jc = 0; jc < m; jc += OUTER_TILE)
-  {
+  for (size_t jc = 0; jc < m; jc += OUTER_TILE) {
     size_t jE = std::min(jc + OUTER_TILE, static_cast<size_t>(m));
-    
-    for (size_t ic = 0; ic < n; ic += INNER_TILE)
-    {
+
+    for (size_t ic = 0; ic < n; ic += INNER_TILE) {
       size_t valid_a = std::min(INNER_TILE, n - ic);
 
-      for (size_t lc = 0; lc < k; lc += INNER_TILE)
-      {
+      for (size_t lc = 0; lc < k; lc += INNER_TILE) {
         size_t valid_b = std::min(INNER_TILE, k - lc);
-
 
         float *ptrC = &C[ic * k + lc];
 
@@ -1402,29 +1250,23 @@ void Tensor::matmul_amx(const float *__restrict__ A, const float *__restrict__ B
           const float *ptrA = &A_t[j * n + ic];
           const float *ptrB = &B[j * k + lc];
           amx_kernel_f32(ptrA, ptrB, valid_a, valid_b, j == jc);
-
         }
-        
+
         store_amx_output(tmp);
-        
+
         if (jc == 0) {
-          for (size_t r = 0; r < valid_a; r++)
-          {
-            for (size_t c = 0; c < valid_b; c++)
-            {
+          for (size_t r = 0; r < valid_a; r++) {
+            for (size_t c = 0; c < valid_b; c++) {
               ptrC[r * k + c] = tmp[c * INNER_TILE + r];
             }
           }
         } else {
-          for (size_t r = 0; r < valid_a; r++)
-          {
-            for (size_t c = 0; c < valid_b; c++)
-            {
+          for (size_t r = 0; r < valid_a; r++) {
+            for (size_t c = 0; c < valid_b; c++) {
               ptrC[r * k + c] += tmp[c * INNER_TILE + r];
             }
           }
         }
-
       }
     }
   }
@@ -1437,8 +1279,7 @@ void Tensor::matmul_amx(const float *__restrict__ A, const float *__restrict__ B
 
 void Tensor::matmul_cpu(const float *__restrict__ A,
                         const float *__restrict__ B, float *__restrict__ C,
-                        int n, int m, int k) const
-{
+                        int n, int m, int k) const {
   // A = nxm
   // B = mxk
   // C = nxk
@@ -1454,31 +1295,25 @@ void Tensor::matmul_cpu(const float *__restrict__ A,
 
   simd_transpose(B, B_t, m, k);
 
-  for (size_t ic = 0; ic < n; ic += T_n)
-  {
+  for (size_t ic = 0; ic < n; ic += T_n) {
     size_t iE = std::min(ic + T_n, static_cast<size_t>(n));
-    for (size_t lc = 0; lc < k; lc += T_k)
-    {
+    for (size_t lc = 0; lc < k; lc += T_k) {
       size_t lE = std::min(lc + T_k, static_cast<size_t>(k));
-      for (size_t i = ic; i < iE; ++i)
-      {
+      for (size_t i = ic; i < iE; ++i) {
         const float *ptrA = &A[i * m];
-        for (size_t l = lc; l < lE; ++l)
-        {
+        for (size_t l = lc; l < lE; ++l) {
           float32x4_t acc = vdupq_n_f32(0.0f);
 
           float sum = 0;
           const float *ptrB = &B_t[l * m];
 
           size_t j = 0;
-          for (; j + 3 < m; j += 4)
-          {
+          for (; j + 3 < m; j += 4) {
             float32x4_t a = vld1q_f32(ptrA + j);
             float32x4_t b = vld1q_f32(ptrB + j);
             acc = vfmaq_f32(acc, a, b);
           }
-          for (; j < m; ++j)
-          {
+          for (; j < m; ++j) {
             sum += ptrA[j] * ptrB[j];
           }
 
@@ -1494,15 +1329,11 @@ void Tensor::matmul_cpu(const float *__restrict__ A,
 void Tensor::matmul_cpu_naive(const float *__restrict__ A,
                               const float *__restrict__ B,
                               float *__restrict__ C, int n, int m,
-                              int k) const
-{
-  for (size_t i = 0; i < n; ++i)
-  {
-    for (size_t l = 0; l < k; ++l)
-    {
+                              int k) const {
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t l = 0; l < k; ++l) {
       float sum = 0;
-      for (size_t j = 0; j < m; ++j)
-      {
+      for (size_t j = 0; j < m; ++j) {
         sum += A[i * m + j] * B[j * k + l];
       }
       C[i * k + l] = sum;
@@ -1511,24 +1342,18 @@ void Tensor::matmul_cpu_naive(const float *__restrict__ A,
 }
 
 void Tensor::simd_transpose(const float *A, float *B, int n, int m, int z,
-                            const int *dists_new) const
-{
+                            const int *dists_new) const {
   // We choose to repeat code rather than make a temp dists var so that the
   // original dists_new can stay const (cannot free if we use const
   // temp_dists_new).
 
-  if (!dists_new)
-  {
+  if (!dists_new) {
     size_t offset = n * m * z;
     // Tile for same reasons as matmul (minimize cache misses)
-    for (size_t ic = 0; ic + tile <= n; ic += tile)
-    {
-      for (size_t jc = 0; jc + tile <= m; jc += tile)
-      {
-        for (size_t i = ic; i < ic + tile; i += 4)
-        {
-          for (size_t j = jc; j < jc + tile; j += 4)
-          {
+    for (size_t ic = 0; ic + tile <= n; ic += tile) {
+      for (size_t jc = 0; jc + tile <= m; jc += tile) {
+        for (size_t i = ic; i < ic + tile; i += 4) {
+          for (size_t j = jc; j < jc + tile; j += 4) {
             // Does 4x4 sections, and a scalar cleanup.
             // Load 16 elements from A to tranpose into B
             //  a = [a0 a1 a2 a3]
@@ -1577,10 +1402,8 @@ void Tensor::simd_transpose(const float *A, float *B, int n, int m, int z,
     // Scalar Clean up what was missed by tiling
 
     // Handles leftover rows - Bottom Rectangle
-    for (size_t i = n - (n % tile); i < n; ++i)
-    {
-      for (size_t j = 0; j < m; ++j)
-      {
+    for (size_t i = n - (n % tile); i < n; ++i) {
+      for (size_t j = 0; j < m; ++j) {
         B[j * n + i] = A[offset + i * m + j];
       }
     }
@@ -1591,24 +1414,16 @@ void Tensor::simd_transpose(const float *A, float *B, int n, int m, int z,
 
     // Handle leftover colouns (ignoring final few rows overlapping with above
     // loop) Basically the top right rectangle
-    for (size_t i = 0; i < n - (n % tile); ++i)
-    {
-      for (size_t j = m - (m % tile); j < m; ++j)
-      {
+    for (size_t i = 0; i < n - (n % tile); ++i) {
+      for (size_t j = m - (m % tile); j < m; ++j) {
         B[j * n + i] = A[offset + i * m + j];
       }
     }
-  }
-  else
-  {
-    for (size_t ic = 0; ic + tile <= n; ic += tile)
-    {
-      for (size_t jc = 0; jc + tile <= m; jc += tile)
-      {
-        for (size_t i = ic; i < ic + tile; i += 4)
-        {
-          for (size_t j = jc; j < jc + tile; j += 4)
-          {
+  } else {
+    for (size_t ic = 0; ic + tile <= n; ic += tile) {
+      for (size_t jc = 0; jc + tile <= m; jc += tile) {
+        for (size_t i = ic; i < ic + tile; i += 4) {
+          for (size_t j = jc; j < jc + tile; j += 4) {
             float32x4_t a = vld1q_f32(
                 &A[z * dists_new[0] + i * dists_new[1] + j * dists_new[2]]);
             float32x4_t b =
@@ -1642,19 +1457,15 @@ void Tensor::simd_transpose(const float *A, float *B, int n, int m, int z,
       }
     }
 
-    for (size_t i = n - (n % tile); i < n; ++i)
-    {
-      for (size_t j = 0; j < m; ++j)
-      {
+    for (size_t i = n - (n % tile); i < n; ++i) {
+      for (size_t j = 0; j < m; ++j) {
         B[j * n + i] =
             A[z * dists_new[0] + i * dists_new[1] + j * dists_new[2]];
       }
     }
 
-    for (size_t i = 0; i < n - (n % tile); ++i)
-    {
-      for (size_t j = m - (m % tile); j < m; ++j)
-      {
+    for (size_t i = 0; i < n - (n % tile); ++i) {
+      for (size_t j = m - (m % tile); j < m; ++j) {
         B[j * n + i] =
             A[z * dists_new[0] + i * dists_new[1] + j * dists_new[2]];
       }
@@ -1662,14 +1473,11 @@ void Tensor::simd_transpose(const float *A, float *B, int n, int m, int z,
   }
 }
 
-Tensor Tensor::matmul(const Tensor &other) const
-{
-  if (other.get_dim_len() == 1 && dim_len == 1)
-  {
+Tensor Tensor::matmul(const Tensor &other) const {
+  if (other.get_dim_len() == 1 && dim_len == 1) {
     // Dimension 1 x 1 = Dot product
 
-    if (other.get_dims_index(0) == dims[0])
-    {
+    if (other.get_dims_index(0) == dims[0]) {
       int *new_dims = int_size_alloc(1);
       new_dims[0] = 1;
       float data_out = 0;
@@ -1680,21 +1488,18 @@ Tensor Tensor::matmul(const Tensor &other) const
       // lanes at the end. Makes use of basic, heuristic tiling to try and keep
       // very large vectors within L1 cache, but this dosent really affect usual
       // small scale performance
-      for (size_t jc = 0; jc < data_len; jc += tile)
-      {
+      for (size_t jc = 0; jc < data_len; jc += tile) {
         size_t jE = std::min(jc + tile, static_cast<size_t>(data_len));
         const float *oPtr = other.data + jc;
         float *tPtr = data + jc;
-        for (size_t j = jc; j + 3 < jE; j += 4)
-        {
+        for (size_t j = jc; j + 3 < jE; j += 4) {
           float32x4_t a = vld1q_f32(oPtr);
           float32x4_t b = vld1q_f32(tPtr);
           oPtr += 4;
           tPtr += 4;
           acc = vfmaq_f32(acc, a, b);
         }
-        for (size_t j = 0; j < (jE % 4); ++j)
-        {
+        for (size_t j = 0; j < (jE % 4); ++j) {
           data_out += (*oPtr) * (*tPtr);
           oPtr += 1;
           tPtr += 1;
@@ -1706,14 +1511,11 @@ Tensor Tensor::matmul(const Tensor &other) const
       return ret;
     }
     throw std::invalid_argument("Invalid dot product dimensions!");
-  }
-  else if (other.get_dim_len() == 1 && dim_len == 2)
-  {
+  } else if (other.get_dim_len() == 1 && dim_len == 2) {
     // dimension 2 x 1 = Vector Product
 
     // n x m X m x 1 = n x 1
-    if (other.get_dims_index(0) == dims[1])
-    {
+    if (other.get_dims_index(0) == dims[1]) {
       int *new_dims = int_size_alloc(1);
       new_dims[0] = dims[0];
 
@@ -1723,28 +1525,23 @@ Tensor Tensor::matmul(const Tensor &other) const
       // computing each dot product row_n * vector, add it to corresponding row
       // index of output array. Dot product computation is sped up with SIMD,
       // same as above.
-      for (size_t ic = 0; ic < new_dims[0]; ic += tile)
-      {
+      for (size_t ic = 0; ic < new_dims[0]; ic += tile) {
         size_t iE = std::min(ic + tile, static_cast<size_t>(new_dims[0]));
-        for (size_t i = ic; i < iE; ++i)
-        {
+        for (size_t i = ic; i < iE; ++i) {
           float sum = 0;
           float32x4_t acc = vdupq_n_f32(0.0f);
-          for (size_t jc = 0; jc < dims[1]; jc += tile)
-          {
+          for (size_t jc = 0; jc < dims[1]; jc += tile) {
             size_t jE = std::min(jc + tile, static_cast<size_t>(dims[1]));
             float *ptrA = &data[i * dims[1] + jc];
             float *ptrB = &(other.data[jc]);
-            for (size_t j = jc; j + 3 < jE; j += 4)
-            {
+            for (size_t j = jc; j + 3 < jE; j += 4) {
               float32x4_t a = vld1q_f32(ptrA);
               float32x4_t b = vld1q_f32(ptrB);
               ptrA += 4;
               ptrB += 4;
               acc = vfmaq_f32(acc, a, b);
             }
-            for (size_t j = 0; j < (jE % 4); ++j)
-            {
+            for (size_t j = 0; j < (jE % 4); ++j) {
               sum += (*ptrA) * (*ptrB);
               ptrA += 1;
               ptrB += 1;
@@ -1759,13 +1556,10 @@ Tensor Tensor::matmul(const Tensor &other) const
       return ret;
     }
     throw std::invalid_argument("Invalid matrix-vector product dimensions!");
-  }
-  else if (other.get_dim_len() == 2 && dim_len == 1)
-  {
+  } else if (other.get_dim_len() == 2 && dim_len == 1) {
     // dimension 1 x 2 = Vector Product
     // 1 x m X m x k = 1 x k
-    if (other.get_dims_index(0) == dims[0])
-    {
+    if (other.get_dims_index(0) == dims[0]) {
       int *new_dims = int_size_alloc(1);
 
       // Transpose to avoid col-wide inefficent access
@@ -1784,28 +1578,23 @@ Tensor Tensor::matmul(const Tensor &other) const
 
       // After transposing, the workings of this function is exactly the same as
       // the matrix-vector product.
-      for (size_t ic = 0; ic < new_dims[0]; ic += tile)
-      {
+      for (size_t ic = 0; ic < new_dims[0]; ic += tile) {
         size_t iE = std::min(ic + tile, static_cast<size_t>(new_dims[0]));
-        for (size_t i = ic; i < iE; ++i)
-        {
+        for (size_t i = ic; i < iE; ++i) {
           float sum = 0;
           float32x4_t acc = vdupq_n_f32(0.0f);
-          for (size_t jc = 0; jc < dims[0]; jc += tile)
-          {
+          for (size_t jc = 0; jc < dims[0]; jc += tile) {
             size_t jE = std::min(jc + tile, static_cast<size_t>(dims[0]));
             float *ptrA = &data[jc];
             float *ptrB = &other_t[i * dims[0] + jc];
-            for (size_t j = jc; j + 3 < jE; j += 4)
-            {
+            for (size_t j = jc; j + 3 < jE; j += 4) {
               float32x4_t a = vld1q_f32(ptrA);
               float32x4_t b = vld1q_f32(ptrB);
               ptrA += 4;
               ptrB += 4;
               acc = vfmaq_f32(acc, a, b);
             }
-            for (size_t j = 0; j < (jE % 4); ++j)
-            {
+            for (size_t j = 0; j < (jE % 4); ++j) {
               sum += (*ptrA) * (*ptrB);
               ptrA += 1;
               ptrB += 1;
@@ -1820,13 +1609,10 @@ Tensor Tensor::matmul(const Tensor &other) const
       return ret;
     }
     throw std::invalid_argument("Invalid vector-matrix product dimensions!");
-  }
-  else if (other.get_dim_len() == 2 && dim_len == 2)
-  {
+  } else if (other.get_dim_len() == 2 && dim_len == 2) {
     // Dimension 2 x 2 = Tensor multiplication
     // Will perform This X Other
-    if (dims[1] == other.get_dims_index(0))
-    {
+    if (dims[1] == other.get_dims_index(0)) {
       int *new_dims = int_size_alloc(2);
 
       new_dims[0] = dims[0];
@@ -1835,64 +1621,56 @@ Tensor Tensor::matmul(const Tensor &other) const
       float *data_out = float_size_alloc(new_dims[0] * new_dims[1]);
 
       // Switch between different matmul alg's for profiling.
-      // matmul_cuda(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
-      matmul_amx(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]); // MAC ONLY
-      // matmul_cpu_unrolled_16x(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
-      // matmul_cpu_unrolled_8x(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
-      // matmul_cpu_unrolled_4x(data, other.data, data_out, new_dims[0],dims[1], new_dims[1]);
-      // matmul_cpu(data, other.data, data_out,new_dims[0], dims[1], new_dims[1]);
-      // matmul_cpu_outer(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
-      // matmul_cpu_tiled(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
-      // matmul_cpu_tiled_old(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
-      // matmul_cpu_naive(data, other.data, data_out, new_dims[0], dims[1], new_dims[1]);
+      // matmul_cuda(data, other.data, data_out, new_dims[0], dims[1],
+      // new_dims[1]);
+      matmul_amx(data, other.data, data_out, new_dims[0], dims[1],
+                 new_dims[1]); // MAC ONLY
+      // matmul_cpu_unrolled_16x(data, other.data, data_out, new_dims[0],
+      // dims[1], new_dims[1]); matmul_cpu_unrolled_8x(data, other.data,
+      // data_out, new_dims[0], dims[1], new_dims[1]);
+      // matmul_cpu_unrolled_4x(data, other.data, data_out, new_dims[0],dims[1],
+      // new_dims[1]); matmul_cpu(data, other.data, data_out,new_dims[0],
+      // dims[1], new_dims[1]); matmul_cpu_outer(data, other.data, data_out,
+      // new_dims[0], dims[1], new_dims[1]); matmul_cpu_tiled(data, other.data,
+      // data_out, new_dims[0], dims[1], new_dims[1]);
+      // matmul_cpu_tiled_old(data, other.data, data_out, new_dims[0], dims[1],
+      // new_dims[1]); matmul_cpu_naive(data, other.data, data_out, new_dims[0],
+      // dims[1], new_dims[1]);
       Tensor ret = Tensor(new_dims, 2, data_out, false);
       return ret;
     }
     throw std::invalid_argument("Invalid matrix-matrix product dimensions!");
-  }
-  else if (other.get_dim_len() >= 2 && dim_len >= 2)
-  {
+  } else if (other.get_dim_len() >= 2 && dim_len >= 2) {
     // Dimension n x n = Batched matrix multiplaction with broadcasting
     // Will perform This X Other, batched
     int other_dim_len = other.get_dim_len();
-    if (dims[dim_len - 1] == other.get_dims_index(other_dim_len - 2))
-    {
+    if (dims[dim_len - 1] == other.get_dims_index(other_dim_len - 2)) {
       int broadcast_dim_len =
           std::max(static_cast<int>(dim_len), other_dim_len);
       int *broadcast_dims = int_size_alloc(broadcast_dim_len);
 
       // Select which dimension will be broadcasted - shorter one will be
       // broadcasted.
-      if (dim_len >= other_dim_len)
-      {
+      if (dim_len >= other_dim_len) {
         int diff = broadcast_dim_len - other_dim_len;
         for (int i = dim_len - 3; i >= 0;
-             --i)
-        { // Loop through all dimensions except last 2 (which are
+             --i) { // Loop through all dimensions except last 2 (which are
           // reserved for matmul)
           int i_other = i - diff;
-          if (i_other < 0)
-          { // If dimension is shorter, replace all unfilled
+          if (i_other < 0) { // If dimension is shorter, replace all unfilled
             // dimensions with longer dimensions.
             broadcast_dims[i] = dims[i];
-          }
-          else
-          {
+          } else {
             int other_dim = other.get_dims_index(i_other);
             if (dims[i] == other_dim ||
                 other_dim ==
-                    1)
-            { // If dimension size is the same or 1, set to main
+                    1) { // If dimension size is the same or 1, set to main
               // dimension (1 case will be handled by strides)
               broadcast_dims[i] = dims[i];
-            }
-            else if (dims[i] == 1)
-            {
+            } else if (dims[i] == 1) {
               broadcast_dims[i] =
                   other_dim; // Same goes for the other set of dimensions.
-            }
-            else
-            { // Dimensions incompatible (not the same or atleast one is
+            } else { // Dimensions incompatible (not the same or atleast one is
               // not 1)
               free(broadcast_dims);
               throw std::invalid_argument(
@@ -1900,31 +1678,20 @@ Tensor Tensor::matmul(const Tensor &other) const
             }
           }
         }
-      }
-      else
-      {
+      } else {
         // Same code if other dimension is shorter.
         int diff = broadcast_dim_len - dim_len;
-        for (int i = other_dim_len - 3; i >= 0; --i)
-        {
+        for (int i = other_dim_len - 3; i >= 0; --i) {
           int other_dim = other.get_dims_index(i);
           int i_this = i - diff;
-          if (i_this < 0)
-          {
+          if (i_this < 0) {
             broadcast_dims[i] = other_dim;
-          }
-          else
-          {
-            if (dims[i_this] == other_dim || other_dim == 1)
-            {
+          } else {
+            if (dims[i_this] == other_dim || other_dim == 1) {
               broadcast_dims[i] = dims[i_this];
-            }
-            else if (dims[i_this] == 1)
-            {
+            } else if (dims[i_this] == 1) {
               broadcast_dims[i] = other_dim;
-            }
-            else
-            {
+            } else {
               free(broadcast_dims);
               throw std::invalid_argument(
                   "Incompatible dimensions for matmul batch broadcasting!");
@@ -1942,8 +1709,7 @@ Tensor Tensor::matmul(const Tensor &other) const
       bmm_shape[0] = 1;
       bmm_shape[1] = dims[dim_len - 2];
       bmm_shape[2] = other.get_dims_index(other_dim_len - 1);
-      for (size_t i = 0; i < broadcast_dim_len - 2; ++i)
-      {
+      for (size_t i = 0; i < broadcast_dim_len - 2; ++i) {
         bmm_shape[0] *= broadcast_dims[i];
       }
 
@@ -1972,20 +1738,18 @@ Tensor Tensor::matmul(const Tensor &other) const
 
       // Each thread handles an set of indivisual slices (divided evenly between
       // all possible threads)
-      for (size_t t = 0; t < n_threads; ++t)
-      {
-        threads[t] = std::thread([&, t]()
-                                 {
+      for (size_t t = 0; t < n_threads; ++t) {
+        threads[t] = std::thread([&, t]() {
           for (size_t i = t; i < bmm_shape[0]; i += n_threads) {
             matmul_cpu_batched(data, other.data, data_out, this_dists,
                                other_dists, dims[dim_len - 2],
                                dims[dim_len - 1], bmm_shape[2], i);
-          } });
+          }
+        });
       }
 
       // Wait for all threads to finish.
-      for (size_t i = 0; i < n_threads; ++i)
-      {
+      for (size_t i = 0; i < n_threads; ++i) {
         threads[i].join();
       }
 
@@ -1996,9 +1760,7 @@ Tensor Tensor::matmul(const Tensor &other) const
 
       Tensor ret = Tensor(bmm_shape, 3, data_out, false);
       return ret;
-    }
-    else
-    {
+    } else {
       throw std::invalid_argument(
           "Invalid batched matrix-matrix product dimensions!");
     }
@@ -2006,21 +1768,18 @@ Tensor Tensor::matmul(const Tensor &other) const
   return Tensor(nullptr, 0, nullptr, false);
 }
 
-Tensor Tensor::clone() const
-{
+Tensor Tensor::clone() const {
   return Tensor(dims, dim_len, data, data_len, dists);
 }
 
-Tensor Tensor::scmul(float s) const
-{
+Tensor Tensor::scmul(float s) const {
   float *data_out = default_data_alloc();
 
   float32x4_t scalar = vdupq_n_f32(s);
   float *tPtr = data;
   float *outPtr = data_out;
 
-  for (size_t i = 0; i + 3 < data_len; i += 4)
-  {
+  for (size_t i = 0; i + 3 < data_len; i += 4) {
     float32x4_t t = vld1q_f32(tPtr);
     float32x4_t res = vmulq_f32(t, scalar);
     vst1q_f32(outPtr, res);
@@ -2028,8 +1787,7 @@ Tensor Tensor::scmul(float s) const
     outPtr += 4;
   }
 
-  for (size_t i = 0; i < data_len % 4; ++i)
-  {
+  for (size_t i = 0; i < data_len % 4; ++i) {
     outPtr[i] = tPtr[i] * s;
   }
 
@@ -2037,24 +1795,19 @@ Tensor Tensor::scmul(float s) const
   return ret;
 }
 
-Tensor Tensor::emul(const Tensor &other) const
-{
+Tensor Tensor::emul(const Tensor &other) const {
   // SIMD largely same as add - check add method for notes.
   // Tensor - Vector element mul - specific, quicker kernel for ANN
-  if (other.get_dim_len() == 1 && dim_len == 2)
-  {
-    if (other.get_dims_index(0) == dims[1])
-    {
+  if (other.get_dim_len() == 1 && dim_len == 2) {
+    if (other.get_dims_index(0) == dims[1]) {
       float *data_out = default_data_alloc();
 
       float *tPtr = data;
       float *outPtr = data_out;
       float *oPtr = other.data;
 
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
-        for (size_t j = 0; j + 3 < dims[1]; j += 4)
-        {
+      for (size_t i = 0; i < dims[0]; ++i) {
+        for (size_t j = 0; j + 3 < dims[1]; j += 4) {
           float32x4_t tf = vld1q_f32(tPtr);
           float32x4_t af = vld1q_f32(&oPtr[j]);
           float32x4_t mul = vmulq_f32(af, tf);
@@ -2062,8 +1815,7 @@ Tensor Tensor::emul(const Tensor &other) const
           tPtr += 4;
           outPtr += 4;
         }
-        for (size_t j = 0; j < (dims[1] % 4); ++j)
-        {
+        for (size_t j = 0; j < (dims[1] % 4); ++j) {
           (*outPtr) = (*tPtr) * oPtr[j];
           outPtr += 1;
           tPtr += 1;
@@ -2072,29 +1824,24 @@ Tensor Tensor::emul(const Tensor &other) const
 
       Tensor ret = Tensor(get_dims_clone(), dim_len, data_out, false);
       return ret;
-    }
-    else if (other.get_dims_index(0) == dims[0])
-    {
+    } else if (other.get_dims_index(0) == dims[0]) {
       float *data_out = default_data_alloc();
 
       float *tPtr = data;
       float *outPtr = data_out;
       float *oPtr = other.data;
 
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
+      for (size_t i = 0; i < dims[0]; ++i) {
         float vec_float = *oPtr;
         float32x4_t af = vdupq_n_f32(vec_float);
-        for (size_t j = 0; j + 3 < dims[1]; j += 4)
-        {
+        for (size_t j = 0; j + 3 < dims[1]; j += 4) {
           float32x4_t tf = vld1q_f32(tPtr);
           float32x4_t mul = vmulq_f32(af, tf);
           vst1q_f32(outPtr, mul);
           tPtr += 4;
           outPtr += 4;
         }
-        for (size_t j = 0; j < (dims[1] % 4); ++j)
-        {
+        for (size_t j = 0; j < (dims[1] % 4); ++j) {
           (*outPtr) = (*tPtr) * vec_float;
           tPtr += 1;
           outPtr += 1;
@@ -2104,19 +1851,13 @@ Tensor Tensor::emul(const Tensor &other) const
 
       Tensor ret = Tensor(get_dims_clone(), dim_len, data_out, false);
       return ret;
-    }
-    else
-    {
+    } else {
       throw std::invalid_argument("Invalid matrix-vector add dimensions!");
     }
-  }
-  else
-  { // General
+  } else { // General
 
-    for (size_t i = 0; i < dim_len; ++i)
-    {
-      if (dims[i] != other.get_dims_index(i))
-      {
+    for (size_t i = 0; i < dim_len; ++i) {
+      if (dims[i] != other.get_dims_index(i)) {
         throw std::invalid_argument("Invalid matrix-matrix add dimensions!");
       }
     }
@@ -2127,8 +1868,7 @@ Tensor Tensor::emul(const Tensor &other) const
     float *tPtr = data;
     float *outPtr = data_out;
 
-    for (size_t i = 0; i + 3 < data_len; i += 4)
-    {
+    for (size_t i = 0; i + 3 < data_len; i += 4) {
       float32x4_t af = vld1q_f32(oPtr);
       float32x4_t tf = vld1q_f32(tPtr);
       float32x4_t mul = vmulq_f32(af, tf);
@@ -2138,8 +1878,7 @@ Tensor Tensor::emul(const Tensor &other) const
       outPtr += 4;
     }
 
-    for (size_t i = 0; i < data_len % 4; ++i)
-    {
+    for (size_t i = 0; i < data_len % 4; ++i) {
       outPtr[i] = tPtr[i] * oPtr[i];
     }
 
@@ -2148,16 +1887,13 @@ Tensor Tensor::emul(const Tensor &other) const
   }
 }
 
-Tensor Tensor::add(const Tensor &other) const
-{
+Tensor Tensor::add(const Tensor &other) const {
   // Tensor - Vector add - specific, quicker kernel for ANN
   // Could generalize in future by doing broadcasting, but would be largely the
   // same as matmul Must be 2D and row major (cannot be semantically
   // reshaped/broadcast/transpose)
-  if (other.get_dim_len() == 1 && dim_len == 2)
-  {
-    if (other.get_dims_index(0) == dims[1])
-    { // Add 1d vector to rows
+  if (other.get_dim_len() == 1 && dim_len == 2) {
+    if (other.get_dims_index(0) == dims[1]) { // Add 1d vector to rows
 
       float *data_out = default_data_alloc();
 
@@ -2167,10 +1903,8 @@ Tensor Tensor::add(const Tensor &other) const
 
       // SIMD Loop: will iterate over rows (contigous) and add vector, with a
       // scalar cleanup
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
-        for (size_t j = 0; j + 3 < dims[1]; j += 4)
-        {
+      for (size_t i = 0; i < dims[0]; ++i) {
+        for (size_t j = 0; j + 3 < dims[1]; j += 4) {
           float32x4_t tf = vld1q_f32(tPtr);
           float32x4_t af = vld1q_f32(&oPtr[j]);
           float32x4_t add = vaddq_f32(af, tf);
@@ -2178,8 +1912,7 @@ Tensor Tensor::add(const Tensor &other) const
           tPtr += 4;
           outPtr += 4;
         }
-        for (size_t j = 0; j < (dims[1] % 4); ++j)
-        {
+        for (size_t j = 0; j < (dims[1] % 4); ++j) {
           (*outPtr) = (*tPtr) + oPtr[j];
           outPtr += 1;
           tPtr += 1;
@@ -2188,9 +1921,7 @@ Tensor Tensor::add(const Tensor &other) const
 
       Tensor ret = Tensor(get_dims_clone(), dim_len, data_out, false);
       return ret;
-    }
-    else if (other.get_dims_index(0) == dims[0])
-    { // Add 1d vector to cols
+    } else if (other.get_dims_index(0) == dims[0]) { // Add 1d vector to cols
 
       float *data_out = default_data_alloc();
 
@@ -2203,20 +1934,17 @@ Tensor Tensor::add(const Tensor &other) const
       // duplicating the corresponding float across one SIMD load and adding it.
       // Scalar cleanup in end Allows for the method to utilize SIMD operations
       // even for non-contigous memory.
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
+      for (size_t i = 0; i < dims[0]; ++i) {
         float vec_float = *oPtr;
         float32x4_t af = vdupq_n_f32(vec_float);
-        for (size_t j = 0; j + 3 < dims[1]; j += 4)
-        {
+        for (size_t j = 0; j + 3 < dims[1]; j += 4) {
           float32x4_t tf = vld1q_f32(tPtr);
           float32x4_t add = vaddq_f32(af, tf);
           vst1q_f32(outPtr, add);
           tPtr += 4;
           outPtr += 4;
         }
-        for (size_t j = 0; j < (dims[1] % 4); ++j)
-        {
+        for (size_t j = 0; j < (dims[1] % 4); ++j) {
           (*outPtr) = (*tPtr) + vec_float;
           tPtr += 1;
           outPtr += 1;
@@ -2226,19 +1954,13 @@ Tensor Tensor::add(const Tensor &other) const
 
       Tensor ret = Tensor(get_dims_clone(), dim_len, data_out, false);
       return ret;
-    }
-    else
-    {
+    } else {
       throw std::invalid_argument("Invalid matrix-vector add dimensions!");
     }
-  }
-  else
-  { // General Tensor Add
+  } else { // General Tensor Add
 
-    for (size_t i = 0; i < dim_len; ++i)
-    {
-      if (dims[i] != other.get_dims_index(i))
-      {
+    for (size_t i = 0; i < dim_len; ++i) {
+      if (dims[i] != other.get_dims_index(i)) {
         throw std::invalid_argument("Invalid matrix-matrix add dimensions!");
       }
     }
@@ -2251,8 +1973,7 @@ Tensor Tensor::add(const Tensor &other) const
 
     // Very simple SIMD loop, just loop over internal data array (row-major) and
     // add.
-    for (size_t i = 0; i + 3 < data_len; i += 4)
-    {
+    for (size_t i = 0; i + 3 < data_len; i += 4) {
       float32x4_t af = vld1q_f32(oPtr);
       float32x4_t tf = vld1q_f32(tPtr);
       float32x4_t add = vaddq_f32(af, tf);
@@ -2262,8 +1983,7 @@ Tensor Tensor::add(const Tensor &other) const
       outPtr += 4;
     }
 
-    for (size_t i = 0; i < data_len % 4; ++i)
-    {
+    for (size_t i = 0; i < data_len % 4; ++i) {
       outPtr[i] = tPtr[i] + oPtr[i];
     }
 
@@ -2272,12 +1992,10 @@ Tensor Tensor::add(const Tensor &other) const
   }
 }
 
-Tensor Tensor::apply(float (*func)(float)) const
-{
+Tensor Tensor::apply(float (*func)(float)) const {
   float *data_out = default_data_alloc();
 
-  for (size_t i = 0; i < data_len; ++i)
-  {
+  for (size_t i = 0; i < data_len; ++i) {
     data_out[i] = func(data[i]);
   }
 
@@ -2285,14 +2003,10 @@ Tensor Tensor::apply(float (*func)(float)) const
   return ret;
 }
 
-Tensor Tensor::transpose2d() const
-{
-  if (dim_len == 1)
-  {
+Tensor Tensor::transpose2d() const {
+  if (dim_len == 1) {
     return clone();
-  }
-  else if (dim_len == 2)
-  {
+  } else if (dim_len == 2) {
     float *data_out = default_data_alloc();
 
     simd_transpose(data, data_out, dims[0], dims[1]);
@@ -2304,93 +2018,71 @@ Tensor Tensor::transpose2d() const
 
     Tensor ret = Tensor(dims_new, dim_len, data_out, false);
     return ret;
-  }
-  else
-  {
+  } else {
     throw std::invalid_argument("Invalid matrix dimensions! Must be 1D or 2D!");
   }
 }
 
-void Tensor::scmul_inplace(float s)
-{
+void Tensor::scmul_inplace(float s) {
   float32x4_t scalar = vdupq_n_f32(s);
   float *tPtr = data;
 
-  for (size_t i = 0; i + 3 < data_len; i += 4)
-  {
+  for (size_t i = 0; i + 3 < data_len; i += 4) {
     float32x4_t t = vld1q_f32(tPtr);
     float32x4_t res = vmulq_f32(t, scalar);
     vst1q_f32(tPtr, res);
     tPtr += 4;
   }
 
-  for (size_t i = 0; i < data_len % 4; ++i)
-  {
+  for (size_t i = 0; i < data_len % 4; ++i) {
     tPtr[i] = tPtr[i] * s;
   }
 }
 
-void Tensor::emul_inplace(const Tensor &other)
-{
-  if (other.get_dim_len() == 1 && dim_len == 2)
-  {
-    if (other.get_dims_index(0) == dims[1])
-    {
+void Tensor::emul_inplace(const Tensor &other) {
+  if (other.get_dim_len() == 1 && dim_len == 2) {
+    if (other.get_dims_index(0) == dims[1]) {
       float *tPtr = data;
       float *oPtr = other.data;
 
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
-        for (size_t j = 0; j + 3 < dims[1]; j += 4)
-        {
+      for (size_t i = 0; i < dims[0]; ++i) {
+        for (size_t j = 0; j + 3 < dims[1]; j += 4) {
           float32x4_t tf = vld1q_f32(tPtr);
           float32x4_t af = vld1q_f32(&oPtr[j]);
           float32x4_t mul = vmulq_f32(af, tf);
           vst1q_f32(tPtr, mul);
           tPtr += 4;
         }
-        for (size_t j = 0; j < (dims[1] % 4); ++j)
-        {
+        for (size_t j = 0; j < (dims[1] % 4); ++j) {
           (*tPtr) = (*tPtr) * oPtr[j];
           tPtr += 1;
         }
       }
-    }
-    else if (other.get_dims_index(0) == dims[0])
-    {
+    } else if (other.get_dims_index(0) == dims[0]) {
       float *tPtr = data;
       float *oPtr = other.data;
 
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
+      for (size_t i = 0; i < dims[0]; ++i) {
         float vec_float = *oPtr;
         float32x4_t af = vdupq_n_f32(vec_float);
-        for (size_t j = 0; j + 3 < dims[1]; j += 4)
-        {
+        for (size_t j = 0; j + 3 < dims[1]; j += 4) {
           float32x4_t tf = vld1q_f32(tPtr);
           float32x4_t mul = vmulq_f32(af, tf);
           vst1q_f32(tPtr, mul);
           tPtr += 4;
         }
-        for (size_t j = 0; j < (dims[1] % 4); ++j)
-        {
+        for (size_t j = 0; j < (dims[1] % 4); ++j) {
           (*tPtr) = (*tPtr) * vec_float;
           tPtr += 1;
         }
         oPtr += 1;
       }
-    }
-    else
-    {
+    } else {
       throw std::invalid_argument("Invalid matrix-vector add dimensions!");
     }
-  }
-  else
-  {
-    for (size_t i = 0; i < dim_len; ++i)
-    {
-      if (dims[i] != other.get_dims_index(i))
-      {
+  } else {
+    for (size_t i = 0; i < dim_len; ++i) {
+      if (dims[i] != other.get_dims_index(i)) {
         throw std::invalid_argument("Invalid matrix dimensions!");
       }
     }
@@ -2398,8 +2090,7 @@ void Tensor::emul_inplace(const Tensor &other)
     const float *oPtr = other.data;
     float *tPtr = data;
 
-    for (size_t i = 0; i + 3 < data_len; i += 4)
-    {
+    for (size_t i = 0; i + 3 < data_len; i += 4) {
       float32x4_t af = vld1q_f32(oPtr);
       float32x4_t tf = vld1q_f32(tPtr);
       float32x4_t mul = vmulq_f32(af, tf);
@@ -2408,79 +2099,61 @@ void Tensor::emul_inplace(const Tensor &other)
       tPtr += 4;
     }
 
-    for (size_t i = 0; i < data_len % 4; ++i)
-    {
+    for (size_t i = 0; i < data_len % 4; ++i) {
       tPtr[i] = tPtr[i] * oPtr[i];
     }
   }
 }
 
 // Will prioritize row-col addition over col-row addition
-void Tensor::add_inplace(const Tensor &other)
-{
-  if (other.get_dim_len() == 1 && dim_len == 2)
-  {
-    if (other.get_dims_index(0) == dims[1])
-    { // Add row to cols
+void Tensor::add_inplace(const Tensor &other) {
+  if (other.get_dim_len() == 1 && dim_len == 2) {
+    if (other.get_dims_index(0) == dims[1]) { // Add row to cols
 
       float *tPtr = data;
       float *oPtr = other.data;
 
       // Dont do tiling to match rest of add, can do in future.
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
-        for (size_t j = 0; j + 3 < dims[1]; j += 4)
-        {
+      for (size_t i = 0; i < dims[0]; ++i) {
+        for (size_t j = 0; j + 3 < dims[1]; j += 4) {
           float32x4_t tf = vld1q_f32(tPtr);
           float32x4_t af = vld1q_f32(&oPtr[j]);
           float32x4_t add = vaddq_f32(af, tf);
           vst1q_f32(tPtr, add);
           tPtr += 4;
         }
-        for (size_t j = 0; j < (dims[1] % 4); ++j)
-        {
+        for (size_t j = 0; j < (dims[1] % 4); ++j) {
           (*tPtr) = (*tPtr) + oPtr[j];
           tPtr += 1;
         }
       }
-    }
-    else if (other.get_dims_index(0) == dims[0])
-    { // Add col to rows
+    } else if (other.get_dims_index(0) == dims[0]) { // Add col to rows
 
       float *tPtr = data;
       float *oPtr = other.data;
 
       // Dont do tiling to match rest of add, can do in future.
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
+      for (size_t i = 0; i < dims[0]; ++i) {
         float vec_float = *oPtr;
         float32x4_t af = vdupq_n_f32(vec_float);
-        for (size_t j = 0; j + 3 < dims[1]; j += 4)
-        {
+        for (size_t j = 0; j + 3 < dims[1]; j += 4) {
           float32x4_t tf = vld1q_f32(tPtr);
           float32x4_t add = vaddq_f32(af, tf);
           vst1q_f32(tPtr, add);
           tPtr += 4;
         }
-        for (size_t j = 0; j < (dims[1] % 4); ++j)
-        {
+        for (size_t j = 0; j < (dims[1] % 4); ++j) {
           (*tPtr) = (*tPtr) + vec_float;
           tPtr += 1;
         }
         oPtr += 1;
       }
-    }
-    else
-    {
+    } else {
       throw std::invalid_argument("Invalid matrix-vector add dimensions!");
     }
-  }
-  else
-  {
-    for (size_t i = 0; i < dim_len; ++i)
-    {
-      if (dims[i] != other.get_dims_index(i))
-      {
+  } else {
+    for (size_t i = 0; i < dim_len; ++i) {
+      if (dims[i] != other.get_dims_index(i)) {
         throw std::invalid_argument("Invalid matrix dimensions!");
       }
     }
@@ -2488,8 +2161,7 @@ void Tensor::add_inplace(const Tensor &other)
     const float *oPtr = other.data;
     float *tPtr = data;
 
-    for (size_t i = 0; i + 3 < data_len; i += 4)
-    {
+    for (size_t i = 0; i + 3 < data_len; i += 4) {
       float32x4_t af = vld1q_f32(oPtr);
       float32x4_t tf = vld1q_f32(tPtr);
       float32x4_t add = vaddq_f32(af, tf);
@@ -2498,26 +2170,21 @@ void Tensor::add_inplace(const Tensor &other)
       tPtr += 4;
     }
 
-    for (size_t i = 0; i < data_len % 4; ++i)
-    {
+    for (size_t i = 0; i < data_len % 4; ++i) {
       tPtr[i] = tPtr[i] + oPtr[i];
     }
   }
 }
 
-void Tensor::apply_inplace(float (*func)(float))
-{
-  for (size_t i = 0; i < data_len; ++i)
-  {
+void Tensor::apply_inplace(float (*func)(float)) {
+  for (size_t i = 0; i < data_len; ++i) {
     data[i] = func(data[i]);
   }
 }
 
 // Must be 2D and row major. Returns a 1D matrix with sum of all rows.
-Tensor Tensor::sum_rows() const
-{
-  if (dim_len == 2)
-  {
+Tensor Tensor::sum_rows() const {
+  if (dim_len == 2) {
     int *new_dims = int_size_alloc(1);
     new_dims[0] = dims[1];
 
@@ -2528,12 +2195,10 @@ Tensor Tensor::sum_rows() const
 
     // Loop through all cols by 4, using SIMD to add all rows (since rows are
     // contigous)
-    for (size_t j = 0; j + 3 < dims[1]; j += 4)
-    {
+    for (size_t j = 0; j + 3 < dims[1]; j += 4) {
       float32x4_t acc = vdupq_n_f32(0.0f);
       // Use the SIMD accumulator to add all rows for each stride of cols.
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
+      for (size_t i = 0; i < dims[0]; ++i) {
         float32x4_t tf = vld1q_f32(tPtr + i * dims[1] + j);
         acc = vaddq_f32(acc, tf);
       }
@@ -2544,11 +2209,9 @@ Tensor Tensor::sum_rows() const
     // Scalar cleanup of columns. Generally cache inefficient (high amount of
     // misses), but this is fine for a scalar cleanup as will only happen 3
     // times max.
-    for (size_t j = 0; j < (dims[1] % 4); ++j)
-    {
+    for (size_t j = 0; j < (dims[1] % 4); ++j) {
       (*outPtr) = 0;
-      for (size_t i = 0; i < dims[0]; ++i)
-      {
+      for (size_t i = 0; i < dims[0]; ++i) {
         (*outPtr) += tPtr[i * dims[1] + j];
       }
       outPtr += 1;
@@ -2556,18 +2219,14 @@ Tensor Tensor::sum_rows() const
 
     Tensor ret = Tensor(new_dims, 1, data_out, false);
     return ret;
-  }
-  else
-  {
+  } else {
     throw std::invalid_argument("Invalid dimensions, must be 2D");
   }
 }
 
 // Must be 2D and row major. Returns a 1D matrix with sum of all cols.
-Tensor Tensor::sum_cols() const
-{
-  if (dim_len == 2)
-  {
+Tensor Tensor::sum_cols() const {
+  if (dim_len == 2) {
     int *new_dims = int_size_alloc(1);
     new_dims[0] = dims[0];
 
@@ -2578,12 +2237,10 @@ Tensor Tensor::sum_cols() const
 
     // Loop through all rows, use SIMD to add since arrays are store in
     // row-major format.
-    for (size_t i = 0; i < dims[0]; ++i)
-    {
+    for (size_t i = 0; i < dims[0]; ++i) {
       // SIMD Loop to add all row elements except tail
       float32x4_t acc = vdupq_n_f32(0.0f);
-      for (size_t j = 0; j + 3 < dims[1]; j += 4)
-      {
+      for (size_t j = 0; j + 3 < dims[1]; j += 4) {
         float32x4_t tf = vld1q_f32(tPtr);
         acc = vaddq_f32(acc, tf);
         tPtr += 4;
@@ -2591,8 +2248,7 @@ Tensor Tensor::sum_cols() const
       (*outPtr) = vaddvq_f32(acc);
 
       // Scalar tail if needed, will always run at most 3 times.
-      for (size_t j = 0; j < (dims[1] % 4); ++j)
-      {
+      for (size_t j = 0; j < (dims[1] % 4); ++j) {
         (*outPtr) += *(tPtr);
         tPtr += 1;
       }
@@ -2601,24 +2257,20 @@ Tensor Tensor::sum_cols() const
 
     Tensor ret = Tensor(new_dims, 1, data_out, false);
     return ret;
-  }
-  else
-  {
+  } else {
     throw std::invalid_argument("Invalid dimensions, must be 2D");
   }
 }
 
 // General - can improve in future to sum over a given axes, would require
 // continous memory for given axes in order to use SIMD
-float Tensor::sum() const
-{
+float Tensor::sum() const {
   float *tPtr = data;
   float out = 0;
   float32x4_t acc = vdupq_n_f32(0.0f);
 
   // Loop over internal data array and accumulate sum in one SIMD buffer.
-  for (size_t i = 0; i + 3 < data_len; i += 4)
-  {
+  for (size_t i = 0; i + 3 < data_len; i += 4) {
     float32x4_t tf = vld1q_f32(tPtr);
     acc = vaddq_f32(acc, tf);
     tPtr += 4;
@@ -2626,46 +2278,37 @@ float Tensor::sum() const
   // Bring SIMD sum into float
   out = vaddvq_f32(acc);
 
-  for (size_t i = 0; i < data_len % 4; ++i)
-  {
+  for (size_t i = 0; i < data_len % 4; ++i) {
     out += tPtr[i];
   }
 
   return out;
 }
 
-float Tensor::get(const std::initializer_list<int> &pos) const
-{
+float Tensor::get(const std::initializer_list<int> &pos) const {
   return data[convert_idx(pos)];
 }
 
-float Tensor::get_index(int i) const
-{
-  if (i < 0 || i > data_len - 1)
-  {
+float Tensor::get_index(int i) const {
+  if (i < 0 || i > data_len - 1) {
     throw std::invalid_argument("Invalid index!");
   }
   return data[i];
 }
 
-void Tensor::set(const std::initializer_list<int> &pos, float val)
-{
+void Tensor::set(const std::initializer_list<int> &pos, float val) {
   data[convert_idx(pos)] = val;
 }
 
-void Tensor::set_index(int i, float val)
-{
-  if (i < 0 || i > data_len - 1)
-  {
+void Tensor::set_index(int i, float val) {
+  if (i < 0 || i > data_len - 1) {
     throw std::invalid_argument("Invalid index!");
   }
   data[i] = val;
 }
 
-int Tensor::get_dims_index(int i) const
-{
-  if (i < 0 || i > dim_len - 1)
-  {
+int Tensor::get_dims_index(int i) const {
+  if (i < 0 || i > dim_len - 1) {
     throw std::invalid_argument("Invalid index!");
   }
   return dims[i];
@@ -2673,21 +2316,17 @@ int Tensor::get_dims_index(int i) const
 
 int Tensor::get_dim_len() const { return dim_len; }
 
-int *Tensor::get_dists_clone() const
-{
+int *Tensor::get_dists_clone() const {
   int *dists_clone = int_size_alloc(dim_len);
-  for (size_t i = 0; i < dim_len; ++i)
-  {
+  for (size_t i = 0; i < dim_len; ++i) {
     dists_clone[i] = dists[i];
   }
   return dists_clone;
 }
 
-int *Tensor::get_dims_clone() const
-{
+int *Tensor::get_dims_clone() const {
   int *dims_clone = int_size_alloc(dim_len);
-  for (size_t i = 0; i < dim_len; ++i)
-  {
+  for (size_t i = 0; i < dim_len; ++i) {
     dims_clone[i] = dims[i];
   }
   return dims_clone;

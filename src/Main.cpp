@@ -1,24 +1,24 @@
-#include <stdio.h>
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <stdio.h>
 #include <vector>
 
-#include "../include/ANN.h"     // this contains the ANN class definition
-#include "../include/Tensor.h"  // this contains the Tensor class definition
+#include "../include/ANN.h"    // this contains the ANN class definition
+#include "../include/Tensor.h" // this contains the Tensor class definition
 
 // Check compiled assembly for matrix class: g++ -O3 -S src/Tensor.cpp -o
 // matmul.s -I include Check compiled assembly for unaligned matrix class: g++
 // -O3 -mno-unaligned-access -S src/Tensor.cpp -o matmul_una.s -I include Check
 // diff: diff -u matmul.s matmul_una.s | less
-static const char* DATA_DIR = "data/";
+static const char *DATA_DIR = "data/";
 
 // X, Y
-std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_MNIST_data(
-    bool train, int batch_size) {
+std::tuple<std::vector<Tensor>, std::vector<Tensor>>
+load_MNIST_data(bool train, int batch_size) {
   std::vector<Tensor> X;
   std::vector<Tensor> Y;
 
@@ -52,14 +52,14 @@ std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_MNIST_data(
 
   // Ignore last few data entries that would be less than batch size.
   for (int ic = 0; ic + batch_size < images; ic += batch_size) {
-    float* image_data =
-        (float*)malloc(batch_size * rows * cols * sizeof(float));
+    float *image_data =
+        (float *)malloc(batch_size * rows * cols * sizeof(float));
 
     if (image_data == nullptr) {
       throw std::runtime_error("Memory allocation error");
     }
 
-    float* label_data = (float*)malloc(batch_size * 10 * sizeof(float));
+    float *label_data = (float *)malloc(batch_size * 10 * sizeof(float));
 
     if (label_data == nullptr) {
       free(image_data);
@@ -72,15 +72,15 @@ std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_MNIST_data(
 
     for (int i = 0; i < batch_size; ++i) {
       std::vector<unsigned char> temp_img(rows * cols);
-      imgFile.read((char*)temp_img.data(), rows * cols);
+      imgFile.read((char *)temp_img.data(), rows * cols);
       for (int j = 0; j < rows * cols; ++j) {
         image_data[(i * rows * cols) + j] =
             static_cast<float>(temp_img[j]) /
-            255.0f;  // Normalize image intensity.
+            255.0f; // Normalize image intensity.
       }
 
       unsigned char temp_label;
-      labFile.read((char*)&temp_label, sizeof(temp_label));
+      labFile.read((char *)&temp_label, sizeof(temp_label));
       label_data[(i * 10) + (int)temp_label] = 1.0f;
     }
 
@@ -94,8 +94,8 @@ std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_MNIST_data(
   return std::make_tuple(X, Y);
 }
 
-void train(ANN& model, const std::vector<Tensor>& X,
-           const std::vector<Tensor>& Y, int epochs, int batch_size) {
+void train(ANN &model, const std::vector<Tensor> &X,
+           const std::vector<Tensor> &Y, int epochs, int batch_size) {
   for (size_t i = 0; i < epochs; ++i) {
     int correct = 0;
     float loss = 0;
@@ -114,8 +114,8 @@ void train(ANN& model, const std::vector<Tensor>& X,
   }
 }
 
-void test(ANN& model, const std::vector<Tensor>& X,
-          const std::vector<Tensor>& Y, int batch_size) {
+void test(ANN &model, const std::vector<Tensor> &X,
+          const std::vector<Tensor> &Y, int batch_size) {
   int correct = 0;
   for (size_t i = 0; i < X.size(); ++i) {
     Tensor test_output = model.forward(X[i]);
@@ -127,7 +127,8 @@ void test(ANN& model, const std::vector<Tensor>& X,
 }
 
 int model_benchmark(const std::vector<int> sizes) {
-  std::vector<ANN::Activation> activations(sizes.size() - 1, ANN::Activation::RELU);
+  std::vector<ANN::Activation> activations(sizes.size() - 1,
+                                           ANN::Activation::RELU);
   activations.back() = ANN::Activation::SOFTMAX;
   ANN model = ANN(sizes, activations, 17);
 
@@ -155,7 +156,8 @@ int model_benchmark(const std::vector<int> sizes) {
   model.print_biases();
   std::cout << "\n";
 
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  auto duration =
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   std::cout << "Time elapsed: " << duration.count() / 1000.0 << " s\n";
 
   return 0;
@@ -171,7 +173,7 @@ int matrix_benchmark(int size) {
 
   for (int i = 0; i < warmup; ++i) {
     auto r = a.matmul(b);
-    asm volatile("" : : "g"(&r) : "memory");  // keep result alive
+    asm volatile("" : : "g"(&r) : "memory"); // keep result alive
   }
 
   std::vector<double> times;

@@ -1,0 +1,29 @@
+===CPU (8x)===
+
+karmaluitel@Karmas-MacBook-Pro m3_neural_network % ./perf_bin_cpu8x_128
+best:   0.199709 ms (21.0021 GFLOP/s)
+median: 0.201458 ms (20.8197 GFLOP/s)
+karmaluitel@Karmas-MacBook-Pro m3_neural_network % ./perf_bin_cpu8x_512
+best:   8.96338 ms (29.948 GFLOP/s)
+median: 8.97154 ms (29.9208 GFLOP/s)
+karmaluitel@Karmas-MacBook-Pro m3_neural_network % ./perf_bin_cpu8x_2048
+best:   594.845 ms (28.8812 GFLOP/s)
+median: 595.49 ms (28.85 GFLOP/s)
+karmaluitel@Karmas-MacBook-Pro m3_neural_network % ./perf_bin_cpu8x_4096
+best:   5237.94 ms (26.2391 GFLOP/s)
+median: 5256.23 ms (26.1478 GFLOP/s)
+
+===AMX===
+
+karmaluitel@Karmas-MacBook-Pro m3_neural_network % ./perf_bin_amx_128 
+best:   0.036959 ms (113.485 GFLOP/s)
+median: 0.038166 ms (109.896 GFLOP/s)
+karmaluitel@Karmas-MacBook-Pro m3_neural_network % ./perf_bin_amx_512
+best:   0.7345 ms (365.467 GFLOP/s)
+median: 0.8265 ms (324.786 GFLOP/s)
+karmaluitel@Karmas-MacBook-Pro m3_neural_network % ./perf_bin_amx_2048
+best:   102.692 ms (167.295 GFLOP/s)
+median: 104.544 ms (164.331 GFLOP/s)
+karmaluitel@Karmas-MacBook-Pro m3_neural_network % ./perf_bin_amx_4096
+best:   1022.02 ms (134.477 GFLOP/s)
+median: 1086.31 ms (126.519 GFLOP/s)
